@@ -18,6 +18,13 @@ triggers:
 
 # Screenshot-to-Gemini
 
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `screenshots.js` | Capture PNGs with per-slide diagnostics + `--diff` pixel comparison + `--agent` compact output. Self-tests chromium on startup with clear install instructions if missing. |
+| `gemini-batch-review.sh` | Chunked Gemini review (batches of 3) with conversation continuation + automatic hallucination guard (cross-verifies QA responses against "describe what you see"). |
+
 ## Agent Quick Path
 
 ```

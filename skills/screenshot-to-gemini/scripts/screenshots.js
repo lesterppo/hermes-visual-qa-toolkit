@@ -1,22 +1,39 @@
 #!/usr/bin/env node
 /**
- * screenshots.js — Headless browser screenshot capture for HTML slide decks.
+ * screenshots.js — Headless browser screenshot capture with pixel diffing.
  *
  * Usage:
- *   node screenshots.js --path deck.html [--slides 1-5,10,15-20] [--output /tmp/]
+ *   node screenshots.js --path deck.html [--slides 1-5,10] [--output /tmp/]
+ *   node screenshots.js --path deck.html --diff --baseline ./baseline/
+ *   node screenshots.js --path deck.html --agent     (compact JSON output)
  *
- * Parses slide numbers, navigates deck, captures PNGs with diagnostic logging.
- * Output: slide_01.png, slide_02.png, ... in --output dir.
+ * Requires: playwright (npm), chromium (~/.cache/ms-playwright/)
+ * Optional: pixelmatch + pngjs (npm) for pixel-level --diff
  */
 
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
+// --- Self-test: verify chromium exists on startup ---
+function selfTest() {
+  const cacheDir = path.join(require('os').homedir(), '.cache', 'ms-playwright');
+  if (!fs.existsSync(cacheDir)) {
+    console.error('FATAL: Chromium not installed.');
+    console.error('Run: cd /tmp && npm install playwright && npx playwright install chromium');
+    process.exit(2);
+  }
+  const dirs = fs.readdirSync(cacheDir).filter(d => d.startsWith('chromium-'));
+  if (dirs.length === 0) {
+    console.error('FATAL: Chromium binary missing from ' + cacheDir);
+    console.error('Run: npx playwright install chromium');
+    process.exit(2);
+  }
+}
+
 function parseArgs() {
   const args = process.argv.slice(2);
   const opts = { path: null, slides: null, output: '/tmp', diff: false, baseline: null, agent: false };
-  
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--path' && args[i+1]) opts.path = args[++i];
     else if (args[i] === '--slides' && args[i+1]) opts.slides = args[++i];
@@ -31,8 +48,7 @@ function parseArgs() {
 function parseSlideList(spec, total) {
   if (!spec || spec === 'all') return Array.from({length: total}, (_, i) => i + 1);
   const result = [];
-  const parts = spec.split(',');
-  for (const part of parts) {
+  for (const part of spec.split(',')) {
     if (part.includes('-')) {
       const [a, b] = part.split('-').map(Number);
       for (let i = a; i <= Math.min(b, total); i++) result.push(i);
@@ -44,9 +60,30 @@ function parseSlideList(spec, total) {
   return [...new Set(result)].sort((a, b) => a - b);
 }
 
+async function pixelDiff(currFile, baseFile) {
+  try {
+    const { PNG } = require('pngjs');
+    const pixelmatch = require('pixelmatch');
+    const img1 = PNG.sync.read(fs.readFileSync(baseFile));
+    const img2 = PNG.sync.read(fs.readFileSync(currFile));
+    if (img1.width !== img2.width || img1.height !== img2.height) {
+      return { changed: true, diffPixels: -1, reason: `size mismatch: ${img1.width}x${img1.height} vs ${img2.width}x${img2.height}` };
+    }
+    const diff = new PNG({ width: img1.width, height: img1.height });
+    const diffPixels = pixelmatch(img1.data, img2.data, diff.data, img1.width, img1.height, { threshold: 0.05 });
+    return { changed: diffPixels > 100, diffPixels, reason: diffPixels > 100 ? `${diffPixels} pixels differ` : 'match' };
+  } catch (e) {
+    if (e.code === 'MODULE_NOT_FOUND') {
+      return { changed: null, reason: 'pixelmatch not installed. Run: npm install pixelmatch pngjs' };
+    }
+    return { changed: null, reason: e.message };
+  }
+}
+
 (async () => {
+  selfTest();
   const opts = parseArgs();
-  if (!opts.path) { console.error('Usage: node screenshots.js --path deck.html [--slides 1-5,10] [--output /tmp/]'); process.exit(1); }
+  if (!opts.path) { console.error('Usage: node screenshots.js --path deck.html [--slides 1-5] [--output /tmp/]'); process.exit(1); }
   
   const htmlPath = opts.path.startsWith('file://') ? opts.path : `file://${path.resolve(opts.path)}`;
   if (!fs.existsSync(opts.output)) fs.mkdirSync(opts.output, { recursive: true });
@@ -55,9 +92,7 @@ function parseSlideList(spec, total) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   
   await page.goto(htmlPath, { waitUntil: 'networkidle', timeout: 15000 });
-  
   const totalSlides = await page.evaluate(() => document.querySelectorAll('.slide').length);
-  console.log(`Total slides: ${totalSlides}`);
   
   const targets = parseSlideList(opts.slides, totalSlides);
   const results = [];
@@ -88,43 +123,42 @@ function parseSlideList(spec, total) {
     await page.screenshot({ path: filepath });
     
     const status = info.opacity < 0.1 ? 'BLANK' : info.width === 0 ? 'ZERO-SIZE' : 'ok';
-    console.log(`Slide ${n}: ${info.title.substring(0,50)} | op:${info.opacity.toFixed(3)} | ${info.width}x${info.height} | ${status}`);
-    results.push({ slide: n, file: filepath, ...info, status });
+    const entry = { slide: n, file: filepath, ...info, status };
+    results.push(entry);
+    
+    if (!opts.agent) console.log(`Slide ${n}: ${info.title.substring(0,50)} | op:${info.opacity.toFixed(3)} | ${info.width}x${info.height} | ${status}`);
   }
   
-  // Diff mode: compare against baseline
+  // Pixel diff mode
   if (opts.diff && opts.baseline) {
-    console.log('\n--- Diff against baseline ---');
+    if (!opts.agent) console.log('\n--- Pixel diff against baseline ---');
     for (const r of results) {
       const baseFile = path.join(opts.baseline, path.basename(r.file));
       if (!fs.existsSync(baseFile)) {
-        console.log(`Slide ${r.slide}: NO BASELINE (${baseFile})`);
+        r.diff = { changed: null, reason: 'no baseline' };
+        if (!opts.agent) console.log(`Slide ${r.slide}: NO BASELINE`);
         continue;
       }
-      // Simple pixel-diff via Playwright's built-in comparator works on page, not files.
-      // For file-based diff, use pixelmatch or imagemagick. Report baseline existence.
-      const baseStat = fs.statSync(baseFile);
-      const currStat = fs.statSync(r.file);
-      const sizeDiff = Math.abs(currStat.size - baseStat.size);
-      const pctChange = baseStat.size > 0 ? (sizeDiff / baseStat.size * 100).toFixed(1) : 'N/A';
-      const verdict = sizeDiff > 1000 ? 'CHANGED' : 'same';
-      console.log(`Slide ${r.slide}: ${verdict} (${pctChange}% size diff)`);
+      const diffResult = await pixelDiff(r.file, baseFile);
+      r.diff = diffResult;
+      if (!opts.agent) {
+        const verdict = diffResult.changed === true ? 'CHANGED' : diffResult.changed === false ? 'same' : `SKIP (${diffResult.reason})`;
+        console.log(`Slide ${r.slide}: ${verdict} — ${diffResult.reason}`);
+      }
     }
   }
   
   await browser.close();
   
-  // Write results JSON for downstream tooling
+  // Write results
   const resultsPath = path.join(opts.output, 'screenshots.json');
   fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
-  // Agent mode: minimal output
-  if (opts.agent) {
-    const summary = { ok: results.every(r => r.status === 'ok'), total: totalSlides, 
-                      captured: results.length, blanks: results.filter(r => r.status !== 'ok').map(r => r.slide) };
-    console.log(JSON.stringify(summary));
-  } else {
-    console.log(`\nResults: ${resultsPath}`);
-    console.log(`Done - ${results.length} screenshots in ${opts.output}/`);
-  }
   
-})().catch(e => { console.error('ERROR:', e.message); process.exit(1); });
+  if (opts.agent) {
+    const blanks = results.filter(r => r.status !== 'ok').map(r => r.slide);
+    const diffs = results.filter(r => r.diff && r.diff.changed === true).map(r => r.slide);
+    console.log(JSON.stringify({ ok: blanks.length === 0 && diffs.length === 0, total: totalSlides, captured: results.length, blanks, diffs }));
+  } else {
+    console.log(`\n${results.length} screenshots → ${opts.output}/ | results → ${resultsPath}`);
+  }
+})().catch(e => { console.error('FATAL:', e.message); process.exit(1); });

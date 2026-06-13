@@ -18,6 +18,13 @@ triggers:
 
 # Gemini Image Generation
 
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `gemini-ping.sh` | Cookie health check: sends "ping", expects "pong". Exit 0 = valid, 1 = expired. Use before any Gemini-dependent workflow. `--quiet` for silent mode. |
+| `gemini-gen-image.sh` | One-command generate+download wrapper (convenience, not replacement for manual 3-step) |
+
 ## Agent Quick Path (manual — transparent, debuggable)
 
 ```
