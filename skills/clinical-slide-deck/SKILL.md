@@ -32,16 +32,17 @@ triggers:
 
 # Clinical Slide Deck Builder
 
-## Agent Quick Path (token-efficient)
+## Agent Quick Path
 
 ```
 TRIGGER: user asks for medical slide deck
-1. web_search → gather trial data + PMIDs (light path) OR med-search-cli → full PubMed pipeline
-2. Build HTML with frontend-design dark theme (navy #0f1623, gold #c9a84c, Crimson Text + DM Sans)
-3. slide-doctor.py deck.html → fix all issues until exit 0
-4. screenshots.js --path deck.html --slides 1-5,35-40,66 → verify rendering
+1. web_search → trial data + PMIDs (light) OR med-search-cli → PubMed (full)
+2. Build HTML: frontend-design dark theme (#0f1623, #c9a84c, Crimson Text + DM Sans)
+3. slide-doctor.py deck.html → 6 checks with full diagnostics → fix issues → re-run
+4. screenshots.js --path deck.html --slides 1-5,35-40,66 → per-slide opacity/visibility
 5. gemini-gemini.sh -i slide_*.png → visual QA → fix → re-screenshot
 6. gemini-gemini.sh -f deck.html → content accuracy review
+   slide-doctor.py --agent and screenshots.js --agent for compact JSON when piping
 ```
 
 ## Dependencies (auto-load chain)

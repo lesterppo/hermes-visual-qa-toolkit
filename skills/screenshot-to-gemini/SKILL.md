@@ -22,11 +22,13 @@ triggers:
 
 ```
 TRIGGER: user reports blank slides, rendering defects, or wants visual QA
-1. node scripts/screenshots.js --path deck.html --slides 1-5,35-40,66 --output /tmp/qa/
-   (checks opacity/visibility per slide, detects BLANK/ZERO-SIZE)
-2. If any BLANK: check that slide's div balance + tag-type (table/ul/ol) in HTML
-3. gemini-gemini.sh -i /tmp/qa/slide_*.png -m pro "QA review: visibility, layout, images"
-4. Cross-verify: "describe exactly what you see" (Gemini may hallucinate SVG issues)
+1. node scripts/screenshots.js --path deck.html --slides 1-5,35-40,66
+   → per-slide title, opacity, dimensions, status (BLANK/ZERO-SIZE/ok)
+   → outputs PNGs + screenshots.json with full diagnostics
+2. If any BLANK: check that slide's div balance + tag-type in HTML
+3. gemini-gemini.sh -i slide_*.png -m pro "QA review"
+4. Cross-verify: "describe exactly what you see" (Gemini hallucination check)
+5. Add --agent for compact JSON: {"ok":true,"total":66,"blanks":[]}
 ```
 
 ## Prerequisites
