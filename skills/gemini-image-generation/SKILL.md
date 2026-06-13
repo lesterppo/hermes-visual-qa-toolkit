@@ -16,9 +16,36 @@ triggers:
     - User's Gemini account supports Imagen
 ---
 
-# Gemini Image Generation (Browser-Cookie Imagen)
+# Gemini Image Generation
+
+## Agent Quick Path
+
+```
+TRIGGER: user wants to generate/replace a diagram as raster image
+1. gemini-gen-image.sh "detailed prompt" --output diagram.png
+   (auto-extracts cookies, calls gemini.py, downloads image)
+2. Replace SVG: patch() old <svg>...</svg> with <img src="diagram.png">
+3. Clean orphaned SVG content: find </svg> boundary, delete all SVG internals
+4. Verify: grep -c 'marker-end' deck.html (should be zero for replaced slides)
+```
+
+## Prerequisites
 
 Use the gemini.py CLI to generate raster images via Gemini's Imagen on gemini.google.com. The chat API returns image URLs in `response.images` — download them with cookie auth.
+
+## One-Command Wrapper
+
+Instead of the manual 2-step process, use `scripts/gemini-gen-image.sh`:
+
+```bash
+# Generate + download in one command
+bash scripts/gemini-gen-image.sh "A dark-themed medical diagram showing..." --output diagram.png
+
+# Auto-extracts cookies, calls gemini.py, parses JSON, downloads with auth
+# Output: SUCCESS: diagram.png (227750 bytes, PNG image data)
+```
+
+The wrapper handles cookie extraction, JSON parsing, and verification automatically.
 
 ## Quick Reference
 

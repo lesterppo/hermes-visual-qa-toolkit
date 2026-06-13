@@ -16,7 +16,20 @@ triggers:
     - User wants Gemini to review slide deck appearance
 ---
 
-# Screenshot-to-Gemini Workflow
+# Screenshot-to-Gemini
+
+## Agent Quick Path
+
+```
+TRIGGER: user reports blank slides, rendering defects, or wants visual QA
+1. node scripts/screenshots.js --path deck.html --slides 1-5,35-40,66 --output /tmp/qa/
+   (checks opacity/visibility per slide, detects BLANK/ZERO-SIZE)
+2. If any BLANK: check that slide's div balance + tag-type (table/ul/ol) in HTML
+3. gemini-gemini.sh -i /tmp/qa/slide_*.png -m pro "QA review: visibility, layout, images"
+4. Cross-verify: "describe exactly what you see" (Gemini may hallucinate SVG issues)
+```
+
+## Prerequisites
 
 Take browser screenshots of HTML pages and send them to Gemini for visual analysis. Uses Playwright (headless Chromium) for rendering and the gemini.py CLI for review.
 
@@ -37,7 +50,35 @@ npx playwright install chromium
 
 After setup, `node screenshots.js` runs in under 15 seconds.
 
-## Screenshot Script
+## Screenshot Script (CLI args)
+
+```bash
+node scripts/screenshots.js \
+  --path ~/deck.html \           # required: HTML file (absolute or relative)
+  --slides 1-5,35-40,66 \       # optional: slide numbers/ranges (default: all)
+  --output /tmp/screenshots/ \   # optional: output dir (default: /tmp)
+  --diff \                       # optional: compare against baseline
+  --baseline /tmp/baseline/      # required with --diff: baseline directory
+```
+
+Outputs per-slide diagnostics: title, opacity, dimensions, and status (ok/BLANK/ZERO-SIZE).
+Writes `screenshots.json` with structured results for downstream tooling.
+
+### --diff mode (regression detection)
+
+```bash
+# First run: save baseline
+node scripts/screenshots.js --path deck.html --slides all --output /tmp/baseline/
+
+# After changes: compare against baseline
+node scripts/screenshots.js --path deck.html --slides all --output /tmp/current/ \
+  --diff --baseline /tmp/baseline/
+```
+
+Reports per-slide file size changes. Slides with >1KB difference flagged as CHANGED.
+For pixel-level diffing, upgrade to Playwright's `expect(page).toHaveScreenshot()`.
+
+## Screenshot Script (basic)
 
 Save as `screenshots.js` (see `scripts/screenshots.js` in this skill):
 

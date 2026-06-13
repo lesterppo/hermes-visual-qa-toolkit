@@ -32,6 +32,18 @@ triggers:
 
 # Clinical Slide Deck Builder
 
+## Agent Quick Path (token-efficient)
+
+```
+TRIGGER: user asks for medical slide deck
+1. web_search → gather trial data + PMIDs (light path) OR med-search-cli → full PubMed pipeline
+2. Build HTML with frontend-design dark theme (navy #0f1623, gold #c9a84c, Crimson Text + DM Sans)
+3. slide-doctor.py deck.html → fix all issues until exit 0
+4. screenshots.js --path deck.html --slides 1-5,35-40,66 → verify rendering
+5. gemini-gemini.sh -i slide_*.png → visual QA → fix → re-screenshot
+6. gemini-gemini.sh -f deck.html → content accuracy review
+```
+
 ## Dependencies (auto-load chain)
 
 This skill builds on:
@@ -366,6 +378,27 @@ When asking Gemini to fix or regenerate an SVG, it frequently **truncates the ou
 <img src="..." onerror="this.style.display='none'">
 ```
 
+## Phase 2f.5: Structural Integrity Check (slide-doctor.py)
+
+Before declaring a deck ready, run the automated integrity checker:
+
+```bash
+PY=~/.hermes/hermes-agent/.venv/bin/python3
+$PY scripts/slide-doctor.py deck.html
+# Exit 0 = clean, 1 = issues found
+# --json for machine-readable output
+```
+
+slide-doctor.py performs 6 checks:
+1. Overall div balance (<div> vs </div>)
+2. Tag-type balance (table, ul, ol — catches </ul>-instead-of-</table> cascading invisibility)
+3. Sequential data-slide numbering
+4. Per-slide div balance
+5. Orphaned content between slides
+6. SVG marker defs placement
+
+Run after every structural edit. The check takes <0.5s on a 66-slide deck.
+
 ## Phase 2g: Screenshot Verification (Browser Rendering QA)
 
 After structural fixes, capture browser screenshots to verify real rendering — div balances and tag counts can mask DOM nesting bugs:
@@ -375,7 +408,9 @@ After structural fixes, capture browser screenshots to verify real rendering —
 cd /tmp && npm install playwright && npx playwright install chromium
 
 # Run the screenshot script (captures key slides with visibility diagnostics)
-node ~/.hermes/skills/creative/clinical-slide-deck/scripts/screenshot-slides.js [deck-path] [slide-numbers...]
+# Script lives in the screenshot-to-gemini skill
+node ~/.hermes/skills/devops/screenshot-to-gemini/scripts/screenshots.js \
+  --path deck.html --slides 1-5,35-40,66 --output /tmp/qa/
 ```
 
 The script outputs per-slide visibility info (opacity, dimensions, title) and saves PNGs to `/tmp/slide_NN.png`. 

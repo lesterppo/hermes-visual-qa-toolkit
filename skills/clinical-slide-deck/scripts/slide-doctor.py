@@ -137,7 +137,8 @@ def main():
     parser = argparse.ArgumentParser(description="Slide deck HTML integrity checker")
     parser.add_argument("path", help="Path to HTML file")
     parser.add_argument("--json", action="store_true", help="Machine-readable JSON output")
-    parser.add_argument("--fix", action="store_true", help="Attempt auto-repair (saves to .fixed.html)")
+    parser.add_argument("--agent", action="store_true", help="Minimal agent-optimized output")
+    parser.add_argument("--fix", action="store_true", help="Attempt auto-repair")
     args = parser.parse_args()
 
     path = Path(args.path)
@@ -185,8 +186,24 @@ def main():
 
     results["ok"] = all_ok
 
-    if args.json:
-        print(json.dumps(results, indent=2))
+    if args.json or args.agent:
+        out = {"ok": all_ok, "file": str(path), "issues": []}
+        if not all_ok:
+            for check_name, check_data in d.items():
+                if isinstance(check_data, dict) and not check_data.get("ok", True):
+                    out["issues"].append({check_name: check_data.get("details", "failed")})
+            for tag, info in d.get("tag_balance", {}).items():
+                if not info["ok"]:
+                    out["issues"].append({"tag_mismatch": {tag: f"{info['opens']}/{info['closes']}"}})
+        if args.agent:
+            # Minimal: one line per issue
+            if out["issues"]:
+                for issue in out["issues"]:
+                    print(json.dumps(issue))
+            else:
+                print(json.dumps({"ok": True, "file": str(path)}))
+        else:
+            print(json.dumps(out, indent=2))
     else:
         # Human-readable output
         d = results["checks"]
