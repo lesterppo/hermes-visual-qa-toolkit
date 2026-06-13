@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" viewBox="0 0 960 540">
+  <defs>
+    <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e"/>
+    </marker>
+    <marker id="arrowGold" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c9a84c"/>
+    </marker>
+    <marker id="arrowTeal" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2dd4bf"/>
+    </marker>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a2540"/>
+      <stop offset="100%" stop-color="#0f1623"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="540" fill="url(#bgGrad)" rx="10"/>
+
+  <!-- Title -->
+  <text x="480" y="35" text-anchor="middle" font-family="'Crimson Text', serif" font-size="22" fill="#c9a84c" font-weight="600">The Hepcidin-Ferroportin Axis</text>
+
+  <!-- === DUODENAL ENTEROCYTE (left) === -->
+  <rect x="40" y="80" width="200" height="180" rx="8" fill="#162033" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+  <text x="140" y="105" text-anchor="middle" font-family="DM Sans" font-size="14" fill="#e2e8f0" font-weight="600">Duodenal Enterocyte</text>
+  
+  <!-- Iron inside enterocyte -->
+  <circle cx="100" cy="145" r="20" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="100" y="149" text-anchor="middle" font-family="DM Sans" font-size="12" fill="#f59e0b">Fe²⁺</text>
+  <circle cx="180" cy="155" r="18" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="180" y="159" text-anchor="middle" font-family="DM Sans" font-size="12" fill="#f59e0b">Fe²⁺</text>
+  
+  <!-- Ferroportin channel -->
+  <rect x="220" y="135" width="14" height="40" rx="3" fill="#4a90d9" opacity="0.6"/>
+  <text x="227" y="170" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#4a90d9">FPN</text>
+
+  <!-- Dietary iron arrow into enterocyte -->
+  <text x="60" y="75" font-family="DM Sans" font-size="11" fill="#94a3b8">Dietary Iron</text>
+  <line x1="60" y1="80" x2="100" y2="130" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowGold)"/>
+
+  <!-- === MACROPHAGE (right) === -->
+  <rect x="700" y="80" width="220" height="180" rx="8" fill="#162033" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+  <text x="810" y="105" text-anchor="middle" font-family="DM Sans" font-size="14" fill="#e2e8f0" font-weight="600">Macrophage (Liver/Spleen)</text>
+
+  <!-- Iron inside macrophage -->
+  <circle cx="740" cy="145" r="20" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="740" y="149" text-anchor="middle" font-family="DM Sans" font-size="12" fill="#f59e0b">Fe²⁺</text>
+  <circle cx="820" cy="155" r="18" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="820" y="159" text-anchor="middle" font-family="DM Sans" font-size="12" fill="#f59e0b">Fe²⁺</text>
+
+  <!-- Senescent RBC → macrophage -->
+  <text x="880" y="75" font-family="DM Sans" font-size="11" fill="#94a3b8">Senescent RBCs</text>
+  <line x1="880" y1="80" x2="830" y2="130" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrowRed)"/>
+
+  <!-- === CIRCULATION (center) === -->
+  <rect x="380" y="200" width="200" height="130" rx="8" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
+  <text x="480" y="225" text-anchor="middle" font-family="DM Sans" font-size="14" fill="#22c55e" font-weight="600">Plasma Circulation</text>
+  <text x="480" y="248" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#94a3b8">Transferrin-bound Fe³⁺</text>
+  
+  <!-- Erythropoiesis box -->
+  <rect x="400" y="265" width="160" height="50" rx="6" fill="rgba(74,144,217,0.12)" stroke="rgba(74,144,217,0.3)" stroke-width="1"/>
+  <text x="480" y="287" text-anchor="middle" font-family="DM Sans" font-size="12" fill="#e2e8f0">Bone Marrow</text>
+  <text x="480" y="305" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#94a3b8">Erythropoiesis (20-25 mg Fe/day)</text>
+
+  <!-- === HEPCIDIN from liver === -->
+  <rect x="380" y="60" width="200" height="55" rx="8" fill="rgba(239,68,68,0.1)" stroke="rgba(239,68,68,0.3)" stroke-width="1.5"/>
+  <text x="480" y="82" text-anchor="middle" font-family="DM Sans" font-size="14" fill="#ef4444" font-weight="600">Hepcidin (Liver)</text>
+  <text x="480" y="102" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#94a3b8">Master iron-regulatory hormone</text>
+
+  <!-- Hepcidin blocking FPN -->
+  <line x1="460" y1="115" x2="227" y2="155" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrowRed)"/>
+  <text x="350" y="125" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#ef4444" font-style="italic">Blocks FPN → ↓ iron export</text>
+
+  <!-- Hepcidin blocking macrophage FPN -->
+  <line x1="500" y1="115" x2="730" y2="155" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrowRed)"/>
+  <text x="610" y="125" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#ef4444" font-style="italic">Blocks FPN</text>
+
+  <!-- Flow: enterocyte → plasma -->
+  <line x1="235" y1="155" x2="380" y2="240" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="310" y="205" font-family="DM Sans" font-size="10" fill="#22c55e">Fe export</text>
+
+  <!-- Flow: macrophage → plasma -->
+  <line x1="710" y1="155" x2="580" y2="240" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="640" y="205" font-family="DM Sans" font-size="10" fill="#22c55e">Fe recycling</text>
+
+  <!-- === UPREGULATORS (bottom left) === -->
+  <rect x="40" y="350" width="270" height="170" rx="8" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.25)" stroke-width="1"/>
+  <text x="175" y="378" text-anchor="middle" font-family="DM Sans" font-size="13" fill="#ef4444" font-weight="600">↑ Hepcidin UPREGULATED by:</text>
+  <text x="55" y="405" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Iron overload (homeostatic feedback)</text>
+  <text x="55" y="428" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Inflammation / IL-6</text>
+  <text x="55" y="451" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Oral iron supplementation (transient)</text>
+  <text x="55" y="474" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Infection (host defense)</text>
+  <text x="55" y="500" font-family="DM Sans" font-size="11" fill="#94a3b8" font-style="italic">→ Traps iron in cells → ↓ plasma iron</text>
+
+  <!-- === DOWNREGULATORS (bottom right) === -->
+  <rect x="650" y="350" width="270" height="170" rx="8" fill="rgba(34,197,94,0.06)" stroke="rgba(34,197,94,0.25)" stroke-width="1"/>
+  <text x="785" y="378" text-anchor="middle" font-family="DM Sans" font-size="13" fill="#22c55e" font-weight="600">↓ Hepcidin DOWNREGULATED by:</text>
+  <text x="665" y="405" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Iron deficiency</text>
+  <text x="665" y="428" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Erythropoietic drive (EPO, hypoxia)</text>
+  <text x="665" y="451" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Hemorrhage / blood loss</text>
+  <text x="665" y="474" font-family="DM Sans" font-size="11" fill="#e2e8f0">• Pregnancy (↑ iron demand)</text>
+  <text x="665" y="500" font-family="DM Sans" font-size="11" fill="#94a3b8" font-style="italic">→ Releases iron into plasma</text>
+
+  <!-- Clinical implication footer -->
+  <rect x="350" y="440" width="260" height="85" rx="8" fill="rgba(201,168,76,0.08)" stroke="rgba(201,168,76,0.3)" stroke-width="1"/>
+  <text x="480" y="463" text-anchor="middle" font-family="DM Sans" font-size="11" fill="#c9a84c" font-weight="600">Clinical Implication</text>
+  <text x="480" y="483" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#e2e8f0">Alternate-day oral dosing avoids</text>
+  <text x="480" y="500" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#e2e8f0">hepcidin-mediated absorption block</text>
+  <text x="480" y="517" text-anchor="middle" font-family="DM Sans" font-size="10" fill="#94a3b8">IV iron bypasses hepcidin entirely</text>
+
+</svg>

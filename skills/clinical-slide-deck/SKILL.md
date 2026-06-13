@@ -73,11 +73,13 @@ Proven workflow for building citation-backed clinical slide decks.
 - Speed matters — the full pipeline takes 20+ tool calls; the light path takes 3–5
 
 **Light path workflow (skip Phases 1–2d):**
-1. Use `web_search` (3–5 queries) to gather key trial data: N, primary endpoint, effect sizes, p-values, safety rates, PMIDs
-2. If needed, use `web_extract` on a comprehensive review article for supplementary data
-3. Pull PMIDs from search results and cite them on the reference slide
-4. Proceed directly to Phase 3 (HTML slide deck construction)
-5. Skip forest plots, GRADE ratings, and PPTX export unless explicitly asked
+**Light path workflow (skip Phases 1–2d):**
+1. Use `web_search` (5–6 targeted queries) to gather key trial data: N, primary endpoint, effect sizes, p-values, safety rates, PMIDs across all topic domains
+2. **Gemini pre-build synthesis:** Send a single structured prompt to Gemini (`-m pro --thinking extended -o /tmp/synthesis.md`) asking it to synthesize ALL search results into a structured evidence document covering epidemiology, pathophysiology, diagnosis, oral therapy, IV therapy, landmark trials, and all relevant special populations. Include specific trial names, numbers, and PMIDs. This consolidates scattered search results into one reference document before deck construction begins. See `references/gemini-pre-build-prompt.md` for the prompt template.
+3. If needed, use `web_extract` on a comprehensive review article for supplementary data
+4. Read the Gemini synthesis and use it as the primary reference while building the HTML deck
+5. Pull PMIDs from the synthesis document and cite them on the reference slide
+6. Skip forest plots, GRADE ratings, and PPTX export unless explicitly asked
 
 The light path still produces PMID-backed, evidence-based decks. It trades exhaustive PubMed discovery for speed on well-covered topics. The full pipeline remains the gold standard for systematic evidence synthesis.
 
@@ -86,8 +88,8 @@ The light path still produces PMID-backed, evidence-based decks. It trades exhau
 Run 3 targeted searches for comprehensive coverage:
 
 ```bash
-PY=~/.hermes/hermes-agent/.venv/bin/python3
-MS=~/.hermes/scripts/med_search_cli_v2.py
+PY=/home/peter/.hermes/hermes-agent/.venv/bin/python3
+MS=/home/peter/.hermes/scripts/med_search_cli_v2.py
 
 # 1. Core RCTs and meta-analyses (the efficacy data)
 $PY $MS search -q "TOPIC KEYWORDS" -m 8 -U "RCT,Meta-Analysis,Systematic Review" -f 2019-01-01 -S citations
@@ -114,7 +116,7 @@ Fetch papers individually with 1.5s delay to avoid NCBI rate limits. Use execute
 
 In WSL, use the auto-auth wrapper:
 ```bash
-GEMINI_WRAPPER=~/.hermes/scripts/gemini/gemini-gemini.sh
+GEMINI_WRAPPER=/home/peter/.hermes/scripts/gemini/gemini-gemini.sh
 $GEMINI_WRAPPER -f paper1.txt -f paper2.txt -f paper3.txt \
   "Extract precise outcome data: N, percentages, p-values, OR, CI. Output as JSON." \
   -o evidence.json
@@ -129,8 +131,8 @@ Gemini auth in WSL requires the direct-cookie-extraction wrapper because browser
 Instead of manual regex, use the structured extractor:
 
 ```bash
-PY=~/.hermes/hermes-agent/.venv/bin/python3
-$PY ~/.hermes/scripts/med-extract.py /tmp/papers.json
+PY=/home/peter/.hermes/hermes-agent/.venv/bin/python3
+$PY /home/peter/.hermes/scripts/med-extract.py /tmp/papers.json
 ```
 
 This returns structured JSON with:
@@ -145,7 +147,7 @@ This returns structured JSON with:
 Rate each paper's evidence certainty:
 
 ```bash
-$PY ~/.hermes/scripts/grade-evidence.py /tmp/papers.json
+$PY /home/peter/.hermes/scripts/grade-evidence.py /tmp/papers.json
 ```
 
 Returns GRADE certainty (High/Moderate/Low/Very Low) with per-domain scores for risk of bias, inconsistency, imprecision, and publication bias.
@@ -155,7 +157,7 @@ Returns GRADE certainty (High/Moderate/Low/Very Low) with per-domain scores for 
 Generate publication-quality forest plots for evidence slides:
 
 ```bash
-$PY ~/.hermes/scripts/forest-plot.py /tmp/effect_sizes.json \
+$PY /home/peter/.hermes/scripts/forest-plot.py /tmp/effect_sizes.json \
   --title "30-Day Rebleeding: TC-325 vs Standard Therapy" \
   -o forest_rebleeding.svg
 ```
@@ -228,58 +230,101 @@ pattern = r'(<div class="slide[^"]*" data-slide="N"[^>]*>.*?</div>\s*</div>)'
 
 The `.*?` (non-greedy) stops at the FIRST `</div>` inside the slide's content — not the slide's actual closing tag. This splits slides into orphaned fragments. The extra `</div>` tags cause browsers to close parent containers prematurely, making **all subsequent slides invisible**. This is what happened with the lecanemab/donanemab deck: slides after "Baseline MRI" were blank because an orphaned `</div>` from a broken insertion closed the slides container.
 
-### Correct approach: Extract, fix, and rebuild at <!-- SLIDE markers
+### Correct approach: Extract, fix, and rebuild at SLIDE + SECTION DIVIDER markers
+
+When the deck uses BOTH `<!-- SLIDE N: Title -->` and `<!-- SECTION DIVIDER -->` markers, the split regex must match both. Missing the section dividers causes them to be absorbed into adjacent slide content, breaking structure.
 
 ```python
 import re
 
-# Step 1: Split the HTML at EVERY <!-- SLIDE marker (both numbered and ### placeholders)
-markers = list(re.finditer(r'<!-- SLIDE (?:(\d+)|(###))', html))
+# Step 0: Find header (everything up to and including <div id="slides">)
+header_end = html.find('<div id="slides">') + len('<div id="slides">') + 1
+header = html[:header_end]
+
+# Find footer (nav + script)
+nav_start = html.find('\n<div id="nav">')
+footer = html[nav_start:]
+
+# Body is header_end → nav_start
+body = html[header_end:nav_start]
+
+# Step 1: Split the body at BOTH SLIDE and SECTION DIVIDER markers
+# MUST include both patterns or section dividers get absorbed
+pattern = r'(<!-- SLIDE \d+:.*?-->|<!-- SECTION DIVIDER -->)'
+parts = re.split(pattern, body)
+# parts alternates: [leading_whitespace, marker0, content0, marker1, content1, ...]
+
+# Step 2: Build marker-content pairs
 blocks = []
-for i, m in enumerate(markers):
-    start = m.start()
-    end = markers[i+1].start() if i+1 < len(markers) else html.find('</div><!-- /slides -->', start)
-    block = html[start:end]
+for i in range(1, len(parts), 2):
+    marker = parts[i]
+    content = parts[i+1] if i+1 < len(parts) else ''
     
-    # Fix div balance: add missing closes or remove excess closes
-    opens = len(re.findall(r'<div\b', block))
-    closes = len(re.findall(r'</div>', block))
+    # Fix div balance per block
+    opens = len(re.findall(r'<div\b', content))
+    closes = len(re.findall(r'</div>', content))
     if opens > closes:
-        block = block.rstrip() + '\n' + ('</div>\n' * (opens - closes))
+        content = content.rstrip() + '\n' + ('</div>\n' * (opens - closes))
     elif closes > opens:
         for _ in range(closes - opens):
-            idx = block.rfind('</div>')
+            idx = content.rfind('</div>')
             if idx > 0:
                 j = idx - 1
-                while j >= 0 and block[j] in ' \t\n\r':
+                while j >= 0 and content[j] in ' \t\n\r':
                     j -= 1
-                block = block[:j+1]
-    blocks.append(block)
+                content = content[:j+1]
+    blocks.append((marker, content))
 
-# Step 2: Strip all existing data-slide attributes from blocks
-for i in range(len(blocks)):
-    blocks[i] = re.sub(r'\s+data-slide="[^"]*"', '', blocks[i])
+# Step 3: Insert new blocks at desired positions (block indices)
+# New blocks are created as <!-- SLIDE ### --> markers with content
+for pos, new_block_content in insertions:
+    blocks.insert(pos + 1, ("<!-- SLIDE ### -->", new_block_content))
 
-# Step 3: Reassemble with sequential numbering
+# Step 4: Rebuild with sequential data-slide numbering
+# First pass: assign sequential numbers in marker-content output
 counter = 0
-body_parts = []
-for block in blocks:
+output_parts = []
+for marker, content in blocks:
     counter += 1
-    block = re.sub(
-        r'(<div class="slide[^"]*")',
-        f'\\1 data-slide="{counter}"',
-        block, count=1
+    content_renumbered = re.sub(
+        r'data-slide="\d+"', 
+        f'data-slide="{counter}"', 
+        content, count=1
     )
-    body_parts.append(block)
+    output_parts.append(marker)
+    output_parts.append('\n')
+    output_parts.append(content_renumbered)
 
-body = '\n'.join(body_parts)
+body_rebuilt = ''.join(output_parts)
 
-# Step 4: Rebuild the full HTML with header (CSS) + body + footer (JS/nav)
-# Step 5: Update nav counter
-nav_counter = f'1 / {counter}'
+# Step 5: Post-rebuild data-slide cleanup
+# New blocks have data-slide="###" which the first pass misses.
+# Second pass: sequential find-and-replace on ALL data-slide attributes
+matches = list(re.finditer(r'data-slide="([^"]*)"', full_html))
+counter = 0
+offset = 0
+for m in matches:
+    counter += 1
+    start = m.start() + offset
+    end = m.end() + offset
+    new_val = f'data-slide="{counter}"'
+    full_html = full_html[:start] + new_val + full_html[end:]
+    offset += len(new_val) - len(m.group(0))
+
+# Step 6: Update nav counter
+full_html = re.sub(
+    r'<span id="counter">.*?</span>', 
+    f'<span id="counter">1 / {counter}</span>', 
+    full_html
+)
+
+# Step 7: Assemble final HTML
+full_html = header + body_rebuilt + footer
 ```
 
-**Why this works:** By splitting at `<!-- SLIDE` comment markers (not regex div matching), each block is a discrete slide regardless of internal structure. Rebalancing divs per-block fixes any drift from broken insertions. This approach survived a 66-slide rebuild with 382/382 balanced divs.
+**Why the two-pass data-slide renumbering is needed:** The first pass replaces `data-slide="DIGITS"` in original blocks. New blocks have `data-slide="###"` which doesn't match `\d+`. The post-rebuild sequential find-and-replace catches ALL remaining attributes regardless of original format.
+
+**Why splitting at markers works:** By splitting at `<!-- SLIDE` and `<!-- SECTION DIVIDER` comment markers (not regex div matching), each block is a discrete slide regardless of internal structure. Rebalancing divs per-block fixes any drift from broken insertions.
 
 ### ⚠ CRITICAL: patch() must NOT include surrounding `<!-- SLIDE` markers in old_string
 
@@ -362,7 +407,30 @@ When a diagram shows a process flowing through columns (e.g., Normal Vessel → 
 
 **Verification:** Grep the SVG for `marker-end` — every directional arrow path should have one. Grep for `marker id=` — the definition must appear BEFORE the first usage in SVG source order.
 
-### Gemini SVG regeneration pitfall
+### Gemini Image Audit — Identifying Which Slides Need Generated Images
+
+After the deck is structurally complete, use Gemini to audit which slides would benefit from generated raster images (Imagen) replacing text-heavy explanations:
+
+```bash
+$WRAPPER -f /path/to/deck.html \
+  "You are reviewing a 60-slide clinical deck on [topic]. Audit the entire deck and identify specific slides that NEED generated images or diagrams to help learners understand complex concepts.
+
+For each slide that needs an image, specify:
+1. The slide title/number and concept
+2. What the image should show (detailed description)
+3. Why text alone is insufficient
+
+Focus on concepts that are: mechanistic (pathways), spatial (anatomical), comparative (side-by-side), or algorithmic (decision trees).
+
+Return a ranked list. Be specific about what to generate." \
+  -m pro --thinking extended -o /tmp/gemini-image-audit.md
+```
+
+Then generate images for the top-ranked slides using the gemini-image-generation skill (`gemini-gen-image.sh`). Embed by inserting `<img>` after the target slide's `<h2>` heading — using `execute_code` with `html.find('<h2>')` to locate the insertion point. Always verify div balance after every insertion.
+
+**Token-efficient batching:** Generate all images in parallel with background processes. Use the gemini-gen-image.sh wrapper (handles auth extraction, generation, download, and verification in one call). Always run `gemini-ping.sh --quiet` before any generation batch — cookies expire across sessions and wasted prompts on expired auth are pure token waste.
+
+**Typical audit yield:** 3–5 slides flagged for image generation per 60-slide deck. Common candidates: pathway diagrams, staging/progression timelines, anatomical distributions, and diagnostic algorithms. The iron deficiency deck audit produced 31 candidates across 60 slides; 7 were implemented (all HIGH-priority GENERATED types).
 
 When asking Gemini to fix or regenerate an SVG, it frequently **truncates the output** — cutting off content mid-SVG and omitting the closing `</svg>` tag. To prevent this:
 
@@ -430,7 +498,7 @@ $WRAPPER -i /tmp/slide_35.png -i /tmp/slide_36.png ... \
 After building the slide deck, send it to Gemini for a formal review. This catches data errors (wrong ARIA rates, outdated regulatory status, incorrect trial numbers) that are easy to miss in self-review.
 
 ```bash
-WRAPPER=~/.hermes/scripts/gemini/gemini-gemini.sh
+WRAPPER=/home/peter/.hermes/scripts/gemini/gemini-gemini.sh
 $WRAPPER -f /path/to/slide-deck.html \
   "You are a senior academic [specialty] reviewing a slide deck for a postgraduate meeting. Provide a thorough critique covering:
 
@@ -507,7 +575,7 @@ Use the frontend-design skill for visual direction. Key design rules for clinica
 Generate a .pptx for clinical settings from a structured JSON spec:
 
 ```bash
-$PY ~/.hermes/scripts/slide-export.py slides_spec.json \
+$PY /home/peter/.hermes/scripts/slide-export.py slides_spec.json \
   --forest-png forest_rebleeding.png \
   -o presentation.pptx
 ```
@@ -627,9 +695,70 @@ curl -sL -b "__Secure-1PSID=${SID}; __Secure-1PSIDTS=${TS}" -o diagram.png "<url
 Save the PNG alongside the HTML, reference with relative `<img src="diagram.png">`. 
 Verify no orphaned `<defs>`, `<rect>`, or `<text>` elements remain after replacement.
 
-## Pitfall: Wrong Closing Tag (e.g. </ul> instead of </table>)
+### ⚠ SVG container-div replacement destroys slide structure
 
-A single mismatched closing tag inside a slide causes a **cascading invisibility bug**. 
+**DO NOT target the wrapping `<div>` that contains the SVG for replacement.** The SVG is often inside a container like `<div style="text-align:center;margin-bottom:16px;">`. If you replace this entire div (from its opening to its closing), and the slide's heading (`<h2>`) or content cards sit between the div and the SVG, the replacement will:
+
+1. Remove the slide's `<h2>` heading (it was adjacent to the container div)
+2. Leave orphaned content cards floating between slides
+3. Cause those cards to be absorbed into the PREVIOUS slide (since the current slide's closing `</div>` was consumed)
+4. Produce a slide with 7 opens / 6 closes — exactly one missing close
+
+**Correct approach:** Target ONLY the `<svg ...>...</svg>` element itself. Leave all surrounding `<div>` wrappers, headings, and card structures intact. Then insert the `<img>` tag alongside or replacing just the `<svg>`:
+
+```python
+# CORRECT: find and replace only the SVG element
+svg_start = html.find('<svg xmlns=')
+svg_end = html.find('</svg>', svg_start) + len('</svg>')
+old_svg = html[svg_start:svg_end]
+new_img = f'<img src="diagram.png" alt="..." style="max-width:100%;height:auto;border-radius:8px">'
+html = html.replace(old_svg, new_img)
+```
+
+This keeps the slide's heading, cards, and div structure intact. Verify div balance is 0 delta after replacement.
+
+### Recovering from container-div destruction
+
+If you already destroyed the slide structure by replacing the container div, the fix requires:
+
+1. Identify which slide lost its heading (grep for expected `<h2>` — if it's missing, that slide was destroyed)
+2. Reconstruct the lost slide content (heading, image, cards) as a standalone block
+3. Fix the div imbalance on the preceding slide (it has 1 extra open from absorbing the orphaned cards)
+4. Insert the reconstructed slide at the correct position
+5. Re-renumber all `data-slide` attributes sequentially
+
+This recovery took 4 iterations in the iron deficiency deck rebuild. **Prevention is far cheaper than recovery.**
+
+## Pitfall: Dense Workflow/Algorithm Slides Overflow 720px Viewport
+
+When building step-by-step algorithm slides with vertical arrow flow (Step 1 → Step 2 → Step 3 → branching treatment cards → decision node → Step 4), the stacked cards + arrows easily exceed 720px height. Screenshots will be truncated — Gemini visual QA will report content as "missing" when it's simply below the fold.
+
+**Fix — compact aggressively for algorithm slides:**
+- Reduce card padding to `8px 16px` (from default 20px 24px)
+- Reduce vertical arrows to `font-size:0.9rem; line-height:1; padding:0` (from 1.5rem/4px)
+- Reduce card heading font to `1.0–1.05rem` and body to `0.85–0.95rem`
+- Use `margin-bottom:4px` on cards, `margin:0` on `<p>` inside cards
+- Set `gap:16px` on flex-rows instead of default 20px
+- Prefer single-line text (avoid `<br>` breaks in algorithm cards)
+- Add `style="font-size:0.9rem"` to the slide div itself as a global shrink
+
+**Verify:** After compacting, re-screenshot the slide and confirm the bottom-most element is visible to Gemini before continuing. The iron deficiency deck required 3 iterations to fit a 7-element vertical flow into 720px.
+
+## Phase 2i: Combined Improvement Review (Gemini + Self-Analysis)
+
+After the initial QA review, run a **two-source improvement pass** for maximum coverage:
+
+1. **Send to Gemini for critique:** Use the Phase 2h review prompt with an added instruction to rank issues as HIGH/MEDIUM/LOW and identify missing clinical nuance, teaching gaps, and under-explored controversies.
+
+2. **Concurrently, perform self-analysis:** Scan the deck yourself for missing topics. Use `execute_code` to programmatically list covered topics vs a checklist of expected domains for the clinical topic. Expect to find 5–15 missing subtopics — this is normal for a first draft.
+
+3. **Merge findings into prioritized action plan.** The combined list will have items neither source would have found alone (e.g., Gemini catches content accuracy nuances; self-analysis catches structure gaps like "no Mentzer index for microcytic differential").
+
+4. **Implement all ranked improvements.** For 60-slide decks, expect 10–15 new slides. Use the marker-based rebuild approach from Phase 2f. Budget 2–3 rebuild iterations (screenshot → fix → re-screenshot).
+
+This two-source pattern caught 15 actionable improvements in the iron deficiency deck that a single-source review would have missed.
+
+## Pitfall: Wrong Closing Tag (e.g. </ul> instead of </table>) 
 Example: in the anti-amyloid deck, a `<table>` was closed with `</ul>`. The browser:
 1. Ignores `</ul>` inside `<table>` (parse error)
 2. Leaves `<table>` open → swallows subsequent `</div>` closing tags
@@ -680,8 +809,8 @@ for tag in ['table', 'ul', 'ol']:
 
 ## Environment
 
-All tools at ~/.hermes/scripts/
-Python venv at ~/.hermes/hermes-agent/.venv/
+All tools at /home/peter/.hermes/scripts/
+Python venv at /home/peter/.hermes/hermes-agent/.venv/
 Set MED_SEARCH_EMAIL for PubMed access.
 Gemini auth optional (pipeline works without it).
 
@@ -692,3 +821,4 @@ Gemini auth optional (pipeline works without it).
 - `references/svg-pathway-template.svg` — dark-themed pathway/cascade diagram template with placeholder labels. Replace bracketed text for any pathway (amyloid cascade, coagulation cascade, signal transduction, etc.)
 - `references/svg-mechanism-comparison-template.svg` — side-by-side two-drug mechanism-of-action comparison template. Left panel (blue) for Drug A, right panel (teal) for Drug B, with antibody Y-shape icons and bullet points.
 - `references/svg-workflow-template.svg` — 4-phase clinical workflow timeline template with numbered phases, three middle items, and four bottom outcomes. Generic enough for pre-treatment, screening, monitoring, or any sequential clinical pathway.
+- `references/svg-hepcidin-ferroportin-template.svg` — reusable 2-source → regulator → destination pathway diagram with upregulator/downregulator panels and clinical implication footer. Replace all `[BRACKETED]` labels. Used for hepcidin axis, coagulation cascades, inflammatory pathways, or any dual-source regulated system with inhibitory control.

@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iron Deficiency — A Comprehensive Evidence-Based Review</title>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #080c14;
+      --bg-slide: #0f1623;
+      --bg-card: #1a2540;
+      --bg-card-alt: #162033;
+      --accent: #c9a84c;
+      --accent-dim: rgba(201,168,76,0.15);
+      --accent-light: rgba(201,168,76,0.3);
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --text-muted: #64748b;
+      --blue: #4a90d9;
+      --teal: #2dd4bf;
+      --red: #ef4444;
+      --red-bg: rgba(239,68,68,0.1);
+      --green: #22c55e;
+      --green-bg: rgba(34,197,94,0.1);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245,158,11,0.1);
+      --border: rgba(201,168,76,0.2);
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { font-size: 16px; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg-body);
+      color: var(--text);
+      overflow: hidden;
+    }
+    /* Slides container */
+    #slides {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: var(--bg-slide);
+      padding: 60px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-y: auto;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    /* Title slides & section dividers get center alignment */
+    .title-slide, .section-divider {
+      justify-content: center !important;
+      text-align: center;
+      align-items: center;
+    }
+    /* Typography */
+    h1 {
+      font-family: 'Crimson Text', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-family: 'Crimson Text', serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+    h3 {
+      font-family: 'Crimson Text', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    p, li {
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .text-dim { color: var(--text-dim); }
+    .text-muted { color: var(--text-muted); font-size: 0.9rem; }
+    .accent { color: var(--accent); }
+    .small { font-size: 0.85rem; }
+    ul, ol { padding-left: 24px; margin-bottom: 12px; }
+    li { margin-bottom: 4px; }
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .card-accent {
+      border-left: 4px solid var(--accent);
+    }
+    .card-blue { border-left: 4px solid var(--blue); }
+    .card-teal { border-left: 4px solid var(--teal); }
+    .card-red { border-left: 4px solid var(--red); }
+    .card-green { border-left: 4px solid var(--green); }
+    .card-amber { border-left: 4px solid var(--amber); }
+    /* Stat boxes */
+    .stat-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .stat-box {
+      flex: 1;
+      min-width: 200px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Crimson Text', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    tr:last-child td { border-bottom: none; }
+    /* Key message box */
+    .key-msg {
+      background: var(--accent-dim);
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+      font-style: italic;
+    }
+    .key-msg strong {
+      color: var(--accent);
+      font-style: normal;
+    }
+    /* Layout helpers */
+    .flex-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .flex-1 { flex: 1; min-width: 280px; }
+    .flex-2 { flex: 2; min-width: 300px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-16 { margin-bottom: 16px; }
+    /* Nav */
+    #nav {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(15,22,35,0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 16px;
+    }
+    #nav button {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    #nav button:hover {
+      background: var(--accent-dim);
+    }
+    #counter {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      min-width: 60px;
+      text-align: center;
+    }
+    /* Slide-in hover for section dividers */
+    .section-divider h1 { font-size: 3.2rem; }
+    .section-divider p { font-size: 1.15rem; color: var(--text-dim); }
+    /* Comparison bar */
+    .comp-bar-wrap {
+      margin-bottom: 12px;
+    }
+    .comp-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+    .comp-bar {
+      height: 8px;
+      background: var(--bg-card-alt);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .comp-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    .comp-fill-blue { background: var(--blue); }
+    .comp-fill-teal { background: var(--teal); }
+    .comp-fill-accent { background: var(--accent); }
+    .comp-fill-red { background: var(--red); }
+    .comp-fill-green { background: var(--green); }
+    /* PMID badge */
+    .pmid {
+      display: inline-block;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 4px;
+      font-family: monospace;
+    }
+    /* Tag */
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .tag-green { background: rgba(34,197,94,0.18); color: #4ade80; font-weight:700; }
+    .tag-red { background: var(--red-bg); color: var(--red); }
+    .tag-amber { background: var(--amber-bg); color: var(--amber); }
+    .tag-blue { background: rgba(74,144,217,0.15); color: var(--blue); }
+    /* Print */
+    @media print {
+      .slide { position: relative; opacity: 1; page-break-after: always; height: auto; }
+      #nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="slides">
+<!-- SLIDE 1: Title -->
+
+<div class="slide title-slide active" data-slide="1">
+  <div style="max-width:800px;">
+    <p style="font-size:0.85rem;color:var(--accent);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Comprehensive Evidence-Based Review</p>
+    <h1 style="font-size:3.5rem;margin-bottom:8px;">Iron Deficiency</h1>
+    <p style="font-size:1.3rem;color:var(--text-dim);margin-bottom:32px;">Pathophysiology, Diagnosis, and Therapeutic Strategies Across Clinical Disciplines</p>
+    <div style="width:80px;height:3px;background:var(--accent);margin:0 auto 24px;"></div>
+    <p class="text-dim">Postgraduate Medical Education &bull; June 2026</p>
+  </div>
+</div>
+
+<!-- SLIDE 2: Disclosures & Agenda -->
+
+<div class="slide" data-slide="2">
+  <h2>Disclosures &amp; Agenda</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Disclosures</h3>
+        <p>No relevant financial relationships with ineligible companies.</p>
+        <p class="text-dim small mt-8">This presentation reflects evidence synthesis from published, peer-reviewed literature. All statistics are referenced with PubMed identifiers (PMIDs).</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Learning Objectives</h3>
+        <ul>
+          <li>Understand the hepcidin-ferroportin axis &amp; iron homeostasis</li>
+          <li>Apply evidence-based diagnostic criteria for iron deficiency</li>
+          <li>Compare oral vs IV iron formulations and dosing strategies</li>
+          <li>Interpret landmark trials in HF, CKD, pregnancy, and IBD</li>
+          <li>Implement guideline-directed investigation and management</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="3">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 1</p>
+    <h1>Epidemiology &amp;<br>Disease Burden</h1>
+    <p style="color:var(--text-dim);">The global scope of iron deficiency</p>
+  </div>
+</div>
+
+<!-- SLIDE 4: Global Epidemiology -->
+
+<div class="slide" data-slide="4">
+  <h2>Global Epidemiology of Iron Deficiency</h2>
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-num">1.92 B</div>
+      <div class="stat-label">People with anemia globally (GBD 2021)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">~50%</div>
+      <div class="stat-label">Anemia cases attributable to iron deficiency</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">2x</div>
+      <div class="stat-label">Iron deficiency without anemia is at least twice as common as IDA</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">#1</div>
+      <div class="stat-label">Leading cause of years lived with disability among women in 35 countries</div>
+    </div>
+  </div>
+  <div class="card card-accent mt-16">
+    <p><strong>Key populations at risk:</strong> Children &lt;5 years, premenopausal women (especially pregnant), people in low- and middle-income countries (LMICs), and patients with chronic inflammatory conditions.</p>
+    <p class="text-dim small">Pasricha S-R et al. <em>Lancet</em> 2021;397:233–248 <span class="pmid">PMID: 33417888</span></p>
+  </div>
+  <p class="text-dim small mt-8">Al-Naseem A et al. Iron deficiency without anaemia: a diagnosis that matters. <em>Clin Med</em> 2021 <span class="pmid">PMID: 33762368</span></p>
+</div>
+
+<!-- SLIDE 5: Epidemiology by population -->
+
+<div class="slide" data-slide="5">
+  <h2>Iron Deficiency by Population</h2>
+  <table>
+    <tr><th>Population</th><th>Prevalence ID/IDA</th><th>Key Driver</th></tr>
+    <tr><td>Non-pregnant women (18–50 yr)</td><td>~30–34% ID</td><td>Menstrual blood loss</td></tr>
+    <tr><td>Pregnant women</td><td>~36% anemia (GBD 2019)</td><td>Expanded plasma volume + fetal demands</td></tr>
+    <tr><td>Adolescent females (12–21 yr)</td><td>~40% ID; 17% IDA</td><td>Growth + menstruation + diet</td></tr>
+    <tr><td>Children &lt;5 years (LMICs)</td><td>~40–50% anemia</td><td>Inadequate intake, infection, parasitic disease</td></tr>
+    <tr><td>Elderly (&gt;65 yr)</td><td>~10–15% IDA</td><td>GI blood loss, malnutrition, CKD</td></tr>
+    <tr><td>Chronic HF patients</td><td>&gt;50% ID</td><td>Inflammation, reduced absorption</td></tr>
+    <tr><td>IBD patients</td><td>~36–90% ID</td><td>GI bleeding, inflammation, malabsorption</td></tr>
+    <tr><td>CKD (non-dialysis)</td><td>~40–50% ID</td><td>Impaired iron utilization, ESA therapy</td></tr>
+  </table>
+  <p class="text-muted small">Young MF et al. <em>Lancet Haematol</em> 2023 <span class="pmid">PMID: 37536355</span> &bull; Chaparro CM & Suchdev PS. <em>Ann N Y Acad Sci</em> 2019 <span class="pmid">PMID: 31008520</span></p>
+</div>
+
+<!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="6">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 2</p>
+    <h1>Iron Homeostasis &amp;<br>Pathophysiology</h1>
+    <p style="color:var(--text-dim);">The hepcidin-ferroportin axis and stages of iron deficiency</p>
+  </div>
+</div>
+
+<!-- SLIDE 7: Body Iron Distribution -->
+
+<div class="slide" data-slide="7">
+  <h2>Body Iron Distribution &amp; Kinetics</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Total Body Iron: ~3–4 g</h3>
+        <div style="margin-top:12px;">
+          <div style="text-align:center;margin:8px 0;">
+<img src="iron-distribution.png" alt="Body Iron Distribution" style="max-width:100%;height:auto;border-radius:8px" onerror="this.outerHTML='<p class=small>[Diagram — Body Iron Distribution]</p>'">
+<p class="text-dim small" style="margin-top:4px;">Daily flux: 20-25 mg for erythropoiesis | 1-2 mg absorbed | ~25 mg recycled</p>
+</div>
+        </div>
+      </div>
+    </div>
+    <div class="flex-1">
+</div>
+</div>
+</div>
+
+
+<!-- SLIDE 8: Hepcidin-Ferroportin Axis -->
+<div class="slide" data-slide="8">
+  <h2>The Hepcidin-Ferroportin Axis</h2>
+  <div style="text-align:center;margin-bottom:16px;">
+<img src="hepcidin-diagram.png" alt="Hepcidin-Ferroportin Axis Diagram" style="max-width:100%;height:auto;border-radius:8px" onerror="this.outerHTML='<p class=small>[Diagram — Hepcidin-Ferroportin Axis]</p>'">
+  </div>
+  <p class="text-muted small" style="text-align:center;margin-bottom:16px;">Adapted from Camaschella C et al. <em>Haematologica</em> 2020 <span class="pmid">PMID: 32060150</span></p>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-accent">
+        <h3>Hepcidin — Master Iron-Regulating Hormone</h3>
+        <ul>
+          <li><strong>Synthesis:</strong> 25-amino acid peptide hormone produced by hepatocytes</li>
+          <li><strong>Target:</strong> Binds ferroportin (sole iron exporter) on enterocytes, macrophages, and hepatocytes</li>
+          <li><strong>Mechanism:</strong> Induces internalization and lysosomal degradation of ferroportin</li>
+          <li><strong>Effect:</strong> ↓↓ Duodenal iron absorption, ↓↓ Macrophage iron release, ↓↓ Hepatocyte iron mobilization</li>
+        </ul>
+      </div>
+      <div class="card card-red mt-8">
+        <h3>Hepcidin is UPREGULATED by:</h3>
+        <ul>
+          <li>Iron overload (homeostatic feedback)</li>
+          <li>Inflammation/Infection — IL-6 is a potent inducer</li>
+          <li>Oral iron supplementation (transient spike lasting &gt;24h)</li>
+        </ul>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Hepcidin is DOWNREGULATED by:</h3>
+        <ul>
+          <li>Iron deficiency (allowing increased absorption)</li>
+          <li>Erythropoietic drive (hypoxia, EPO, hemorrhage)</li>
+          <li>Pregnancy (increased iron demand)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Clinical Implications</h3>
+        <ul>
+          <li><strong>Alternate-day dosing</strong> — oral iron acutely raises hepcidin, blocking absorption for &gt;24 hours</li>
+          <li><strong>Functional iron deficiency</strong> — hepcidin-driven sequestration despite adequate stores</li>
+          <li><strong>IV iron bypasses</strong> hepcidin blockade entirely</li>
+          <li><strong>IRIDA</strong> — TMPRSS6 mutations → elevated hepcidin</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- SLIDE 9: Stages of Iron Deficiency -->
+
+<div class="slide" data-slide="9">
+  <h2>Progressive Stages of Iron Deficiency</h2>
+  <table>
+    <tr><th>Stage</th><th>Bone Marrow Iron</th><th>Ferritin</th><th>TSAT</th><th>Hb/MCV</th><th>Clinical</th></tr>
+    <tr><td><strong>1. Iron Depletion</strong></td><td>↓</td><td>↓ &lt;30 µg/L</td><td>Normal</td><td>Normal</td><td>Often asymptomatic; fatigue possible</td></tr>
+    <tr><td><strong>2. Iron-Deficient Erythropoiesis</strong></td><td>Absent</td><td>↓ &lt;20 µg/L</td><td>↓ &lt;20%</td><td>Normal or borderline</td><td>Subtle cognitive/performance deficits</td></tr>
+    <tr><td><strong>3. Iron Deficiency Anemia</strong></td><td>Absent</td><td>↓↓ &lt;12–15 µg/L</td><td>↓↓ &lt;15%</td><td>↓ Hb, ↓ MCV, ↑ RDW</td><td>Fatigue, pallor, dyspnea, pica, restless legs</td></tr>
+  </table>
+  <div style="text-align:center;margin:16px 0;">
+<img src="stages-iron-deficiency.png" alt="Progressive Stages of Iron Deficiency" style="max-width:100%;height:auto;border-radius:8px" onerror="this.outerHTML='<p class=small>[Diagram — Stages of Iron Deficiency]</p>'">
+</div>
+      <div class="key-msg mt-16">
+    <strong>Critical point:</strong> All tissues are iron-deficient in Stage 2 <em>before</em> anemia develops. Non-hematologic manifestations (fatigue, cognitive impairment, restless legs syndrome, pica) can occur with normal hemoglobin. IDWA is at least <strong>twice as prevalent</strong> as IDA.
+  </div>
+  <p class="text-muted small">Camaschella C. <em>N Engl J Med</em> 2015;372:1832–1843 <span class="pmid">PMID: 25946282</span> &bull; Al-Naseem A et al. <em>Clin Med</em> 2021 <span class="pmid">PMID: 33762368</span></p>
+</div>
+
+<!-- SLIDE 10 -->
+<div class="slide" data-slide="10">
+  <h2>Clinical Recognition — RLS, Pica &amp; Pagophagia</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Pagophagia (Ice Craving)</h3>
+        <ul>
+          <li><strong>Highly specific</strong> for iron deficiency</li>
+          <li>Pathognomonic when present — resolves within days of iron repletion</li>
+          <li>Mechanism: ?oral cooling enhances dopamine transmission in iron-deficient brain</li>
+          <li>Screening: "Do you ever crave or chew ice?" — patients rarely volunteer this</li>
+          <li>Other pica forms: starch (amylophagia), clay (geophagia), dirt</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Restless Legs Syndrome</h3>
+        <ul>
+          <li>Brain iron deficiency — low CSF ferritin despite normal peripheral iron stores</li>
+          <li>Iron is <strong>first-line therapy</strong> for RLS (AASM guideline)</li>
+          <li>Target ferritin &gt;75–100 µg/L (higher than for IDA alone)</li>
+          <li>IV iron (FCM 1,000 mg) effective in refractory RLS</li>
+          <li>Oral iron may suffice for mild cases; IV for severe or oral-intolerant</li>
+        </ul>
+        <p class="text-muted small mt-8">Allen RP et al. <em>Sleep Med</em> 2018 — IRST consensus <span class="pmid">PMID: 29425576</span></p>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Teaching point:</strong> These symptoms resolve with iron treatment — not with behavioral intervention. Asking about ice craving is a high-yield clinical question that takes 5 seconds. In RLS, check ferritin in ALL patients — dopamine agonists are second-line after iron repletion.
+  </div>
+</div><!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="11">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 3</p>
+    <h1>Diagnosis of<br>Iron Deficiency</h1>
+    <p style="color:var(--text-dim);">Laboratory evaluation and emerging biomarkers</p>
+  </div>
+</div>
+
+
+
+
+<!-- SLIDE 11: Diagnostic Approach -->
+
+<div class="slide" data-slide="12">
+  <h2>Laboratory Diagnosis of Iron Deficiency</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Primary Tests</h3>
+        <table>
+          <tr><th>Parameter</th><th>Finding in ID</th></tr>
+          <tr><td>Serum ferritin</td><td>↓ (most sensitive and specific)</td></tr>
+          <tr><td>Transferrin saturation (TSAT)</td><td>↓ &lt;20%</td></tr>
+          <tr><td>Serum iron</td><td>↓ (diurnal variation; unreliable alone)</td></tr>
+          <tr><td>TIBC</td><td>↑ (reflects apo-transferrin)</td></tr>
+          <tr><td>sTfR (soluble transferrin receptor)</td><td>↑ (distinguishes IDA from ACD)</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>CBC Findings</h3>
+        <table>
+          <tr><th>Parameter</th><th>Finding in IDA</th></tr>
+          <tr><td>Hemoglobin</td><td>↓</td></tr>
+          <tr><td>MCV</td><td>↓ &lt;80 fL (microcytosis)</td></tr>
+          <tr><td>MCH</td><td>↓ (hypochromia)</td></tr>
+          <tr><td>RDW</td><td>↑ (anisocytosis)</td></tr>
+          <tr><td>Reticulocyte Hb (CHr)</td><td>↓ (early indicator, &lt;28 pg)</td></tr>
+        </table>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Gold Standard</h3>
+        <p>Bone marrow biopsy with <strong>Perls' Prussian blue</strong> staining — absence of stainable iron in macrophages. Rarely performed in modern practice; ferritin is an excellent surrogate.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: ASH Guidelines -->
+
+<div class="slide" data-slide="13">
+  <h2>ASH 2023 Draft Recommendations — Ferritin Cutoffs</h2>
+  <table>
+    <tr><th>Population</th><th>Recommended Ferritin Cutoff</th><th>Strength</th><th>Notes</th></tr>
+    <tr>
+      <td><strong>Children 9 mo – 4 yr</strong></td>
+      <td>≤20 ng/mL (rather than ≤12)</td>
+      <td><span class="tag tag-amber">Conditional</span></td>
+      <td>Without known inflammation; higher threshold if inflamed</td>
+    </tr>
+    <tr>
+      <td><strong>General adults</strong> (excluding menstruating/pregnant)</td>
+      <td>≤30 ng/mL (rather than ≤15)</td>
+      <td><span class="tag tag-amber">Conditional</span></td>
+      <td>Low certainty evidence ⨁⨁◯◯</td>
+    </tr>
+    <tr>
+      <td><strong>Menstruating individuals</strong></td>
+      <td>≤30 ng/mL; against ≤15<br><em>Consider ≤50 if HMB/symptoms/risk factors</em></td>
+      <td><span class="tag tag-amber">Conditional</span></td>
+      <td>Detailed menstrual history essential</td>
+    </tr>
+    <tr>
+      <td><strong>Symptomatic or at-risk adults</strong></td>
+      <td>≤50 ng/mL</td>
+      <td><span class="tag tag-green">Good Practice</span></td>
+      <td>Especially pre-op, planning pregnancy, HMB</td>
+    </tr>
+  </table>
+  <div class="key-msg mt-16">
+    <strong>Key shift:</strong> ASH is moving from the traditional ≤12–15 ng/mL cutoff toward higher thresholds (≤30 ng/mL) to capture iron deficiency earlier — before anemia develops.
+  </div>
+  <p class="text-muted small">ASH Draft Recommendations for Diagnosis of ID, Public Comment 2023–2024 &bull; WHO Guideline on Use of Ferritin Concentrations, 2020</p>
+</div>
+
+<!-- SLIDE 14 -->
+<div class="slide" data-slide="14">
+  <h2>The "Gray Zone" — Ferritin 30–100 ng/mL</h2>
+
+  <div style="text-align:center;margin-bottom:16px;">
+<img src="gray-zone-flowchart.png" alt="Gray Zone Ferritin Decision Flowchart" style="max-width:100%;height:auto;border-radius:8px" onerror="this.outerHTML='<p class=small>[Diagram — Gray Zone Ferritin Decision Flowchart]</p>'">
+  </div>
+  <p>This is where clinical reasoning matters most. ASH says ≤30 is ID — but what about the symptomatic patient with ferritin 45?</p>
+  <table>
+    <tr><th>Scenario</th><th>Ferritin</th><th>TSAT</th><th>Symptoms</th><th>Action</th></tr>
+    <tr>
+      <td><strong>Clear ID</strong></td>
+      <td>30–50</td>
+      <td>&lt;20%</td>
+      <td>Any</td>
+      <td><span class="tag tag-green">Treat as ID</span></td>
+    </tr>
+    <tr>
+      <td><strong>Probable ID</strong></td>
+      <td>30–50</td>
+      <td>≥20%</td>
+      <td>Fatigue, pica, RLS, hair loss</td>
+      <td><span class="tag tag-green">Therapeutic trial of iron</span></td>
+    </tr>
+    <tr>
+      <td><strong>Possible ID</strong></td>
+      <td>50–100</td>
+      <td>&lt;20%</td>
+      <td>Symptoms + risk factors (HMB, donor)</td>
+      <td><span class="tag tag-amber">Check sTfR, CHr, %HYPO</span></td>
+    </tr>
+    <tr>
+      <td><strong>Unlikely ID</strong></td>
+      <td>50–100</td>
+      <td>≥20%</td>
+      <td>None</td>
+      <td><span class="tag tag-blue">Monitor; recheck in 3–6 months</span></td>
+    </tr>
+    <tr>
+      <td><strong>Functional ID</strong><br>(inflammation present)</td>
+      <td>50–100</td>
+      <td>&lt;20%</td>
+      <td>CRP ↑, underlying disease active</td>
+      <td><span class="tag tag-red">sTfR/log ferritin; consider IV iron trial</span></td>
+    </tr>
+  </table>
+  <div class="key-msg mt-16">
+    <strong>Principle:</strong> Ferritin is a continuous variable, not a binary switch. The <strong>clinical context + TSAT</strong> are more informative than the ferritin number alone. In chronic inflammatory conditions, ferritin 100 may still represent iron deficiency.
+  </div>
+</div><!-- SLIDE 15 -->
+<div class="slide" data-slide="15">
+  <h2>Case — The Gray Zone in Practice</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Presentation</h3>
+        <p>A 58-year-old woman with 4 months of fatigue, hair thinning, and poor sleep. Postmenopausal × 5 years. No GI symptoms. BMI 24. On PPI for GERD. Non-smoker.</p>
+        <p class="text-dim small mt-8">Hb 12.1 g/dL (WNL), MCV 82 fL (borderline)<br>Ferritin 62 µg/L, TSAT 17%, CRP 2 mg/L (normal)</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Analysis</h3>
+        <ul>
+          <li>Ferritin 62 — above the ASH ≤30 cutoff, below the ≤100 HF cutoff</li>
+          <li>TSAT 17% — below the &lt;20% threshold → <strong>impaired iron delivery</strong></li>
+          <li>Normal CRP → ferritin is <strong>not</strong> confounded by inflammation</li>
+          <li>PPI use → reduced iron absorption</li>
+          <li>This patient has iron deficiency without anemia (IDWA)</li>
+        </ul>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Plan</h3>
+        <ul>
+          <li>Stop PPI if possible, or switch to H2 blocker</li>
+          <li><strong>Therapeutic trial:</strong> Oral iron, alternate-day dosing × 8 weeks</li>
+          <li>Reassess symptoms + repeat ferritin/TSAT at 8 weeks</li>
+          <li>If no response → IV iron</li>
+          <li>Coeliac screen (anti-tTG) — always in unexplained ID</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Teaching point:</strong> The "gray zone" ferritin of 30–100 is where clinical acumen is tested. Use TSAT, symptoms, risk factors, and therapeutic trials — not rigid cutoffs.
+  </div>
+</div><!-- SLIDE 13: Ferritin in Inflammation -->
+
+<div class="slide" data-slide="16">
+  <h2>Interpreting Ferritin in the Setting of Inflammation</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-red">
+        <h3>The Problem</h3>
+        <p>Ferritin is an acute-phase reactant. In chronic inflammatory states, ferritin can be "falsely" normal or elevated despite true iron deficiency.</p>
+        <p class="text-dim small mt-8">Hepcidin rises with IL-6 → iron trapped in macrophages → high ferritin but low circulating iron.</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Adjusted Thresholds in Inflammation</h3>
+        <table>
+          <tr><th>Condition</th><th>Ferritin Cutoff (µg/L)</th></tr>
+          <tr><td>General population</td><td>&lt;30</td></tr>
+          <tr><td>Chronic HF</td><td>&lt;100 (or &lt;300 if TSAT &lt;20%)</td></tr>
+          <tr><td>CKD (non-dialysis)</td><td>&lt;100 (or TSAT &lt;20%)</td></tr>
+          <tr><td>IBD (active)</td><td>&lt;100</td></tr>
+          <tr><td>Chronic inflammatory disease</td><td>&lt;100</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card card-blue mt-16">
+    <h3>Ancillary Markers to Distinguish IDA from Anemia of Chronic Disease</h3>
+    <ul>
+      <li><strong>sTfR/log ferritin index</strong> (Thomas plot) — elevated in IDA, normal in ACD</li>
+      <li><strong>Reticulocyte hemoglobin content (CHr)</strong> — &lt;28 pg suggests iron-restricted erythropoiesis</li>
+      <li><strong>% Hypochromic red cells (%HYPO)</strong> — &gt;5% indicates functional ID</li>
+      <li><strong>Hepcidin</strong> — not yet clinically available as a validated assay</li>
+    </ul>
+  </div>
+  <p class="text-muted small">Cacoub P et al. <em>J Intern Med</em> 2022 <span class="pmid">PMID: 35466452</span></p>
+</div>
+
+<!-- SLIDE 17 -->
+<div class="slide" data-slide="17">
+  <h2>Microcytic Anemia — Differential Diagnosis</h2>
+
+  <div style="text-align:center;margin-bottom:16px;">
+<img src="blood-smear-comparison.png" alt="Peripheral Blood Smear: IDA vs Thalassemia Trait" style="max-width:100%;height:auto;border-radius:8px" onerror="this.outerHTML='<p class=small>[Diagram — Peripheral Blood Smear: IDA vs Thalassemia Trait]</p>'">
+  </div>
+  <p>Not every microcytic anemia is iron deficiency. Misdiagnosis → wrong treatment → harm.</p>
+  <table>
+    <tr><th>Parameter</th><th>Iron Deficiency Anemia</th><th>Thalassemia Trait</th><th>Anemia of Chronic Disease</th></tr>
+    <tr><td><strong>MCV</strong></td><td>↓↓ (may be very low)</td><td>↓↓ (disproportionately low for Hb)</td><td>↓ or normal</td></tr>
+    <tr><td><strong>RBC count</strong></td><td>↓ (decreased production)</td><td><span class="tag tag-green">↑ or normal</span> (ineffective erythropoiesis)</td><td>↓</td></tr>
+    <tr><td><strong>RDW</strong></td><td><span class="tag tag-green">↑ (anisocytosis)</span></td><td>Normal (uniform microcytosis)</td><td>Normal or mild ↑</td></tr>
+    <tr><td><strong>Ferritin</strong></td><td>↓↓</td><td>Normal or ↑</td><td>Normal or ↑</td></tr>
+    <tr><td><strong>Serum iron / TSAT</strong></td><td>↓↓</td><td>Normal</td><td>↓↓</td></tr>
+    <tr><td><strong>TIBC</strong></td><td>↑</td><td>Normal</td><td>↓</td></tr>
+    <tr><td><strong>Mentzer Index</strong><br>(MCV / RBC)</td><td><span class="tag tag-green">&gt;13</span></td><td><span class="tag tag-blue">&lt;13</span></td><td>Variable</td></tr>
+    <tr><td><strong>Peripheral smear</strong></td><td>Hypochromia, pencil cells, target cells</td><td>Basophilic stippling, target cells, nucleated RBCs</td><td>Normocytic or mildly microcytic</td></tr>
+  </table>
+  <div class="key-msg mt-8">
+    <strong>Quick rule:</strong> Mentzer index &lt;13 → thalassemia trait likely → check Hb electrophoresis before giving iron. RBC count is the single most overlooked discriminator — thalassemia trait has ↑ RBC count; IDA has ↓ RBC count. Giving iron to thalassemia trait is futile and may cause iron overload.
+  </div>
+  <p class="text-muted small">Mentzer WC. <em>J Pediatr</em> 1973 &bull; Camaschella C. <em>N Engl J Med</em> 2015 <span class="pmid">PMID: 25946282</span></p>
+</div><!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="18">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 4</p>
+    <h1>Oral Iron Therapy</h1>
+    <p style="color:var(--text-dim);">First-line treatment and the alternate-day dosing paradigm</p>
+  </div>
+</div>
+
+<!-- SLIDE 15: Oral Iron Basics -->
+
+<div class="slide" data-slide="19">
+  <h2>Oral Iron — First-Line Therapy</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Formulations &amp; Elemental Iron Content</h3>
+        <table>
+          <tr><th>Preparation</th><th>Elemental Iron</th></tr>
+          <tr><td>Ferrous sulfate (dried)</td><td>~65 mg per 200 mg tablet</td></tr>
+          <tr><td>Ferrous sulfate (heptahydrate)</td><td>~60 mg per 300 mg tablet</td></tr>
+          <tr><td>Ferrous gluconate</td><td>~35 mg per 300 mg tablet</td></tr>
+          <tr><td>Ferrous fumarate</td><td>~65–100 mg per tablet</td></tr>
+          <tr><td>Iron polymaltose complex</td><td>~100 mg per tablet</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Expected Response</h3>
+        <ul>
+          <li>Hb rise of <strong>~2 g/dL over 3–4 weeks</strong></li>
+          <li>Confirmatory reticulocytosis at days 5–10</li>
+          <li>Continue for <strong>3–6 months after Hb normalization</strong> to replete stores</li>
+          <li>Target ferritin &gt;50–100 µg/L and TSAT &gt;20%</li>
+        </ul>
+      </div>
+      <div class="card card-red mt-8">
+        <h3>Poor Response — "Refractory IDA"</h3>
+        <ul>
+          <li>Non-adherence (GI side effects)</li>
+          <li>Ongoing blood loss exceeding replacement</li>
+          <li>Malabsorption (celiac, H. pylori, PPI use, bariatric surgery)</li>
+          <li>Incorrect diagnosis (thalassemia trait, ACD)</li>
+          <li>IRIDA (TMPRSS6 mutation)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: Alternate-Day Dosing -->
+
+<div class="slide" data-slide="20">
+  <h2>The Alternate-Day Dosing Paradigm</h2>
+
+  <div style="text-align:center;margin-bottom:16px;">
+<img src="alternate-day-graph.png" alt="Daily vs Alternate-Day Iron Absorption" style="max-width:100%;height:auto;border-radius:8px" onerror="this.outerHTML='<p class=small>[Diagram — Daily vs Alternate-Day Iron Absorption]</p>'">
+  </div>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-accent">
+        <h3>Stoffel et al. (2017) — Two Open-Label RCTs <span class="pmid">PMID: 29032957</span></h3>
+        <table>
+          <tr><th>Study</th><th>Design</th><th>Result</th></tr>
+          <tr>
+            <td><strong>Study 1</strong><br>Consecutive vs Alternate Day</td>
+            <td>40 iron-depleted women (ferritin ≤25 µg/L); 60 mg iron daily ×14d vs alternate days ×28d (same total dose)</td>
+            <td><span class="tag tag-green">Alternate-day: 34% higher fractional absorption</span><br>(21.8% vs 16.3%, p=0.0013)<br>Total iron absorbed: 175 mg vs 131 mg</td>
+          </tr>
+          <tr>
+            <td><strong>Study 2</strong><br>Once Daily vs Twice Daily</td>
+            <td>20 women; 120 mg once daily vs 60 mg BID ×3d</td>
+            <td><strong>No difference</strong> in total absorption<br>Twice-daily dosing → higher hepcidin (p=0.013)</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Mechanism</h3>
+        <p>Oral iron acutely increases hepcidin for &gt;24 hours, blocking absorption of subsequent doses. Alternate-day dosing allows hepcidin to return to baseline between doses.</p>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Practical Recommendation</h3>
+        <ul>
+          <li><strong>Single morning dose</strong>, empty stomach</li>
+          <li><strong>Every other day</strong> (e.g., M/W/F)</li>
+          <li>Splitting dose does NOT improve absorption</li>
+          <li>May improve GI tolerability</li>
+        </ul>
+      </div>
+      <p class="text-muted small mt-8">Stoffel NU et al. <em>Lancet Haematol</em> 2017 &bull; Stoffel NU et al. <em>Haematologica</em> 2020 <span class="pmid">PMID: 31413088</span> (confirmed in anemic women)</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17: Vitamin C and Oral Iron -->
+
+<div class="slide" data-slide="21">
+  <h2>Oral Iron — Adjuncts &amp; Practical Tips</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Vitamin C Co-Administration</h3>
+        <p><strong>Li et al. JAMA Network Open 2020 <span class="pmid">PMID: 33136134</span></strong></p>
+        <p>RCT of 440 adults with IDA: iron + vitamin C vs iron alone. Primary endpoint: Hb change at 2 weeks.</p>
+        <div class="stat-row mt-8">
+          <div class="stat-box" style="padding:12px;">
+            <div class="stat-num" style="font-size:1.3rem;">No difference</div>
+            <div class="stat-label">Hb change: +1.9 vs +1.8 g/dL (p=0.62)</div>
+          </div>
+        </div>
+        <p class="text-dim small">Vitamin C does not meaningfully enhance absorption in standard practice. The small theoretical benefit does not justify routine co-administration.</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Enhancing Absorption</h3>
+        <ul>
+          <li>Take on <strong>empty stomach</strong> (1 hr before or 2 hr after meals)</li>
+          <li>If GI upset, take with small amount of food</li>
+          <li>Avoid concurrent <strong>tea, coffee, calcium, antacids, PPIs</strong></li>
+          <li><strong>Heme iron</strong> (red meat) is absorbed independently of hepcidin</li>
+        </ul>
+      </div>
+      <div class="card card-amber mt-8">
+        <h3>Managing GI Side Effects</h3>
+        <ul>
+          <li>Start low, go slow</li>
+          <li>Switch formulation (gluconate &lt; sulfate &lt; fumarate)</li>
+          <li>Alternate-day dosing reduces GI symptoms</li>
+          <li>Enteric-coated or sustained-release preparations (lower absorption)</li>
+          <li>If intolerant → IV iron</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 22 -->
+<div class="slide" data-slide="22">
+  <h2>Alternate-Day Dosing — Making It Work in Practice</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>The Evidence Is Clear</h3>
+        <ul>
+          <li>34% higher fractional absorption (Stoffel 2017)</li>
+          <li>Lower hepcidin response → more iron absorbed per mg</li>
+          <li>Better GI tolerability</li>
+          <li>Same or better Hb rise vs daily dosing in RCTs</li>
+        </ul>
+      </div>
+      <div class="card card-red mt-8">
+        <h3>But Adherence Is the Real Challenge</h3>
+        <p>Patients struggle to remember "every other day" regimens. Adherence drops significantly vs daily routines.</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>Practical Strategies</h3>
+        <ul>
+          <li><strong>Monday-Wednesday-Friday</strong> framing (not "every other day")</li>
+          <li>Calendar marking: "even days" / "odd days" of the month</li>
+          <li>Smartphone daily alarm with day-of-week labels</li>
+          <li>Pill box with day labels — leave empty on off-days</li>
+          <li>Link to existing routine: "with Monday/Wednesday/Friday breakfast"</li>
+        </ul>
+      </div>
+      <div class="card card-blue mt-8">
+        <h3>Counseling Script</h3>
+        <p><em>"Take one tablet on Monday, Wednesday, and Friday mornings on an empty stomach. This sounds counterintuitive — taking less often actually gets MORE iron into your body. And it's easier on your stomach."</em></p>
+      </div>
+    </div>
+  </div>
+</div><!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="23">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 5</p>
+    <h1>Intravenous Iron<br>Formulations</h1>
+    <p style="color:var(--text-dim);">Modern parenteral iron options and comparative safety</p>
+  </div>
+</div>
+
+<!-- SLIDE 19: IV Iron Comparison -->
+
+<div class="slide" data-slide="24">
+  <h2>Intravenous Iron Formulations — Comparison</h2>
+  <table>
+    <tr><th>Formulation</th><th>Brand</th><th>Max Single Dose</th><th>Infusion Time</th><th>Test Dose</th><th>Key Features</th></tr>
+    <tr>
+      <td><strong>Ferric Carboxymaltose</strong></td>
+      <td>Injectafer</td>
+      <td>750 mg (max 1,500 mg per course)</td>
+      <td>15 min (push) or IV infusion</td>
+      <td>No</td>
+      <td>Most studied in HF; ↑ risk of hypophosphatemia</td>
+    </tr>
+    <tr>
+      <td><strong>Ferric Derisomaltose</strong><br>(iron isomaltoside 1000)</td>
+      <td>Monoferric / Monofer</td>
+      <td>20 mg/kg (up to 1,000 mg)</td>
+      <td>20 min</td>
+      <td>No</td>
+      <td>Lowest hypophosphatemia risk; single-visit total-dose replacement</td>
+    </tr>
+    <tr>
+      <td><strong>Iron Sucrose</strong></td>
+      <td>Venofer</td>
+      <td>200–300 mg</td>
+      <td>30 min – 2 hr</td>
+      <td>No</td>
+      <td>Multiple visits needed; well-established safety</td>
+    </tr>
+    <tr>
+      <td><strong>Ferumoxytol</strong></td>
+      <td>Feraheme</td>
+      <td>510 mg</td>
+      <td>15 min</td>
+      <td>No</td>
+      <td>Low hypophosphatemia; boxed warning for hypersensitivity</td>
+    </tr>
+    <tr>
+      <td><strong>Low MW Iron Dextran</strong></td>
+      <td>INFeD</td>
+      <td>1,000 mg</td>
+      <td>1–4 hr</td>
+      <td><strong>Yes</strong></td>
+      <td>Total-dose infusion possible; requires test dose (0.6% anaphylaxis risk)</td>
+    </tr>
+  </table>
+  <p class="text-muted small mt-8">Zhao C, He W. <em>Med Int</em> 2026. Efficacy of oral vs IV iron: systematic review and meta-analysis &bull; Auerbach M et al. <em>Am J Hematol</em> 2020 — FERWON-IDA trial</p>
+</div>
+
+<!-- SLIDE 20: Hypophosphatemia -->
+
+<div class="slide" data-slide="25">
+  <h2>FCM-Associated Hypophosphatemia — A Clinical Concern</h2>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-red">
+        <h3>Mechanism</h3>
+        <p>FCM impairs degradation of intact FGF23 → elevated FGF23 → ↓ renal phosphate reabsorption and ↓ 1,25(OH)₂D → <strong>urinary phosphate wasting</strong> and hypophosphatemia.</p>
+      </div>
+      <table class="mt-16">
+        <tr><th>Trial</th><th>Comparison</th><th>Hypophosphatemia<br>(&lt;2.0 mg/dL)</th></tr>
+        <tr><td>FIRM (Wolf et al. <em>JCI Insight</em> 2018)</td><td>FCM vs Ferumoxytol</td><td><span class="tag tag-red">50.8% vs 0.9%</span></td></tr>
+        <tr><td>Wolf et al. <em>JAMA</em> 2020 (Trial A)</td><td>FCM vs Ferric Derisomaltose</td><td><span class="tag tag-red">~75% vs ~8%</span></td></tr>
+        <tr><td>PREVENTT sub-study 2025</td><td>FCM 1,000 mg pre-op</td><td><span class="tag tag-amber">~37% any; ~9% moderate/severe</span></td></tr>
+      </table>
+    </div>
+    <div class="flex-1">
+      <div class="card card-amber">
+        <h3>Clinical Significance</h3>
+        <ul>
+          <li>Usually asymptomatic and self-limited (resolves ~12 weeks)</li>
+          <li>Case reports of <strong>hypophosphatemic osteomalacia</strong> with repeated dosing</li>
+          <li>Monitor phosphate in patients receiving multiple FCM infusions</li>
+          <li>Ferric derisomaltose and ferumoxytol associated with significantly lower risk</li>
+        </ul>
+      </div>
+      <div class="card card-accent mt-8" style="padding-bottom:24px;">
+        <h3>Recommendation</h3>
+        <p>Consider ferric derisomaltose (Monoferric) or ferumoxytol in patients at high risk for hypophosphatemia complications — those with pre-existing bone disease, repeated dosing needs, or CKD-MBD. Check baseline/follow-up phosphate in patients receiving repeated FCM doses. Clinically significant osteomalacia is rare but reported. For persistent/severe hypophosphatemia: oral phosphate supplementation (1–2 g/day in divided doses) ± calcitriol if FGF23-mediated.</p>
+      </div>
+    </div>
+  </div>
+  <p class="text-muted small">Wolf M et al. <em>JAMA</em> 2020 — Two RCTs comparing FCM vs ferric derisomaltose &bull; Arora I et al. <em>JCEM Case Rep</em> 2023</p>
+</div>
+
+<!-- SLIDE 21: IV Iron Safety -->
+
+<div class="slide" data-slide="26">
+  <h2>IV Iron — Safety Profile &amp; Adverse Events</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-red">
+        <h3>Infusion Reactions</h3>
+        <ul>
+          <li><strong>Minor:</strong> Transient flushing, myalgia, arthralgia, metallic taste (common; self-limited)</li>
+          <li><strong>Moderate:</strong> Chest tightness, back pain, hypotension (Fishbane reaction — complement activation-related pseudo-allergy)</li>
+          <li><strong>Severe:</strong> Anaphylaxis (rare; 0.01–0.1% with modern formulations)</li>
+        </ul>
+        <p class="text-dim small mt-8">Risk is LOWER with newer formulations than historical high-MW iron dextran.</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>General Safety</h3>
+        <ul>
+          <li>No routine test dose for modern formulations (FCM, FDI, iron sucrose, ferumoxytol)</li>
+          <li>Avoid in first trimester of pregnancy (limited data)</li>
+          <li>Safe in 2nd/3rd trimester</li>
+          <li>Avoid during active infection (theoretical risk of promoting bacterial growth)</li>
+          <li>Contraindicated: known hypersensitivity, iron overload (hemochromatosis)</li>
+        </ul>
+      </div>
+      <div class="key-msg mt-8">
+        <strong>Modern IV iron is safe.</strong> A meta-analysis of &gt;10,000 patients found no increased risk of serious adverse events compared with placebo or oral iron.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 27 -->
+<div class="slide" data-slide="27">
+  <h2>Pre-Operative Anemia &amp; Patient Blood Management</h2>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-red">
+        <h3>The Problem</h3>
+        <ul>
+          <li>Pre-operative anemia prevalence: <strong>~30–40%</strong> in elective surgery</li>
+          <li>Independent risk factor for transfusion, morbidity, mortality, and prolonged LOS</li>
+          <li>Each 1 g/dL drop in pre-op Hb → ~1.5× increase in 30-day mortality</li>
+          <li>Often discovered days before surgery — too late for effective oral iron</li>
+        </ul>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Patient Blood Management (PBM) — 3 Pillars</h3>
+        <ol>
+          <li><strong>Optimize erythropoiesis:</strong> ID screen + iron repletion 2–4 weeks pre-op</li>
+          <li><strong>Minimize blood loss:</strong> Surgical technique, tranexamic acid</li>
+          <li><strong>Harness tolerance of anemia:</strong> Restrictive transfusion thresholds</li>
+        </ol>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>IV Iron Pre-Op — Evidence</h3>
+        <ul>
+          <li><strong>PREVENTT</strong> (Richards et al. <em>Lancet</em> 2020 <span class="pmid">PMID: 32828615</span>): FCM vs placebo pre-op; no difference in primary composite. Debate about timing (too close to surgery)</li>
+          <li><strong>Meta-analyses:</strong> IV iron reduces transfusion in orthopedic + colorectal surgery when given ≥2 weeks pre-op</li>
+          <li>Recommended: screen at time of surgical listing → treat ID early</li>
+          <li>Preferred: <strong>FDI (single total-dose infusion)</strong> or FCM</li>
+        </ul>
+      </div>
+      <div class="card card-amber mt-8">
+        <h3>Who to Screen</h3>
+        <p>All patients for major surgery (EBL >500 mL). Ferritin + TSAT + Hb at surgical listing. Treat ID even if Hb is normal. Target pre-op Hb >13 g/dL.</p>
+      </div>
+    </div>
+  </div>
+</div><!-- SLIDE 28 -->
+<div class="slide" data-slide="28">
+  <h2>Transfusion Avoidance — The Role of Rapid IV Iron</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>When to Transfuse — Modern Thresholds</h3>
+        <table>
+          <tr><th>Scenario</th><th>Transfusion Threshold</th></tr>
+          <tr><td>Hemodynamically unstable</td><td>Transfuse regardless of Hb</td></tr>
+          <tr><td>Acute bleeding + IDA</td><td>Hb &lt;70–80 g/L (restrictive)</td></tr>
+          <tr><td>Stable IDA, asymptomatic</td><td><span class="tag tag-green">Avoid transfusion — IV iron alone</span></td></tr>
+          <tr><td>Stable IDA, symptomatic</td><td>Hb &lt;70 g/L; IV iron if Hb ≥70</td></tr>
+          <tr><td>Cardiovascular disease</td><td>Hb &lt;80 g/L (liberal threshold)</td></tr>
+          <tr><td>Postpartum IDA</td><td>IV iron preferred; transfuse if Hb &lt;60–70 or symptomatic</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>Why Avoid Transfusion?</h3>
+        <ul>
+          <li>TRALI, TACO, alloimmunization, infection risk</li>
+          <li>Length of stay and cost</li>
+          <li>Modern IV iron can raise Hb by <strong>1–2 g/dL/week</strong></li>
+          <li>Single-visit FDI infusion = total-dose replacement</li>
+          <li>Patient preference: most prefer IV iron over transfusion when counseled</li>
+        </ul>
+      </div>
+      <div class="card card-blue mt-8">
+        <h3>Evidence Supporting IV Iron Over Transfusion</h3>
+        <ul>
+          <li>PIVOTAL (2019): proactive IV iron reduced transfusions by 28% <span class="pmid">PMID: 30462937</span></li>
+          <li>Multiple RCTs in postpartum, post-op, GI bleeding: IV iron non-inferior to transfusion for stable patients</li>
+          <li>NICE 2015: IV iron should be offered before transfusion in non-urgent IDA</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Principle:</strong> Transfuse for hemodynamic instability or severe symptomatic anemia. For stable iron deficiency, IV iron is safer, cheaper, and more durable than transfusion — it treats the cause, not just the hemoglobin number.
+  </div>
+</div><!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="29">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 6</p>
+    <h1>Iron Deficiency in<br>Heart Failure</h1>
+    <p style="color:var(--text-dim);">Landmark trials and guideline-directed therapy</p>
+  </div>
+</div>
+
+<!-- SLIDE 23: HF Epidemiology -->
+
+<div class="slide" data-slide="30">
+  <h2>Iron Deficiency in Heart Failure — Why It Matters</h2>
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-num">&gt;50%</div>
+      <div class="stat-label">Prevalence of ID in chronic HF</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">Up to 80%</div>
+      <div class="stat-label">Prevalence of ID in acute HF</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">Independent</div>
+      <div class="stat-label">Predictor of mortality (regardless of Hb)</div>
+    </div>
+  </div>
+  <div class="card card-accent mt-16">
+    <h3>ESC/ACC Definition of ID in HF</h3>
+    <p>Serum <strong>ferritin &lt;100 µg/L</strong> OR ferritin 100–299 µg/L with <strong>TSAT &lt;20%</strong></p>
+  </div>
+  <div class="card card-blue mt-8">
+    <h3>Why Does ID Matter in HF?</h3>
+    <ul>
+      <li>Iron is a cofactor for mitochondrial enzymes (oxidative phosphorylation)</li>
+      <li>ID → impaired cardiomyocyte and skeletal muscle energetics</li>
+      <li>ID independently associated with ↓ exercise capacity, ↓ QoL, and ↑ HF hospitalizations</li>
+      <li>Effects are independent of anemia — non-anemic iron deficiency in HF still carries poor prognosis</li>
+      <li>ID is highly prevalent across the full LVEF spectrum — including <strong>HFpEF</strong> (~50%); data for IV iron treatment in HFpEF are emerging but less robust than for HFrEF</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 24: Landmark HF Trials -->
+
+<div class="slide" data-slide="31">
+  <h2>Landmark Trials — IV Iron in Heart Failure</h2>
+
+  <div style="text-align:center;margin-bottom:16px;">
+<img src="hf-landmark-trials.png" alt="Landmark IV Iron Trials in Heart Failure" style="max-width:100%;height:auto;border-radius:8px" onerror="this.outerHTML='<p class=small>[Diagram — Landmark IV Iron Trials in Heart Failure]</p>'">
+  </div>
+  <table>
+    <tr><th>Trial</th><th>Year</th><th>N</th><th>Intervention</th><th>Primary Outcome</th><th>Result</th></tr>
+    <tr>
+      <td><strong>FAIR-HF</strong><br><span class="pmid">PMID: 19920055</span></td>
+      <td>2009</td>
+      <td>459</td>
+      <td>FCM vs placebo (24 wk)</td>
+      <td>PGA + NYHA class</td>
+      <td><span class="tag tag-green">50% vs 28% improved PGA</span> (OR 2.51, p&lt;0.001)</td>
+    </tr>
+    <tr>
+      <td><strong>CONFIRM-HF</strong><br><span class="pmid">PMID: 25176939</span></td>
+      <td>2015</td>
+      <td>304</td>
+      <td>FCM vs placebo (52 wk)</td>
+      <td>6MWT change at wk 24</td>
+      <td><span class="tag tag-green">+33 m vs placebo</span> (p=0.002); sustained to wk 52</td>
+    </tr>
+    <tr>
+      <td><strong>AFFIRM-AHF</strong><br><span class="pmid">PMID: 33276917</span></td>
+      <td>2020</td>
+      <td>1,132</td>
+      <td>FCM vs placebo (52 wk)<br>Post-acute HF</td>
+      <td>Total HF hosp + CV death</td>
+      <td><span class="tag tag-green">RR 0.74</span> (p=0.024); 26% reduction in total HF hospitalizations</td>
+    </tr>
+    <tr>
+      <td><strong>IRONMAN</strong><br><span class="pmid">PMID: 36347265</span></td>
+      <td>2022</td>
+      <td>1,137</td>
+      <td>Ferric derisomaltose vs usual care (2.7 yr median FU)</td>
+      <td>CV death + HF hosp</td>
+      <td><span class="tag tag-amber">RR 0.82</span> (p=0.07); pre-COVID RR 0.76 (p=0.047)</td>
+    </tr>
+    <tr>
+      <td><strong>FAIR-HF2</strong><br>(DZHK05)</td>
+      <td>2025</td>
+      <td>1,105</td>
+      <td>FCM vs placebo<br>LVEF ≤45%</td>
+      <td>CV death + HF hosp</td>
+      <td><span class="tag tag-green">Men: HR 0.74 (p=0.016)</span><br><span class="tag tag-red">Women: HR 1.07 (p=0.80)</span></td>
+    </tr>
+  </table>
+  <p class="text-muted small">Anker SD et al. <em>NEJM</em> 2009 &bull; Ponikowski P et al. <em>EHJ</em> 2015 &bull; Ponikowski P et al. <em>Lancet</em> 2020 &bull; Kalra PR et al. <em>Lancet</em> 2022</p>
+</div>
+
+<!-- SLIDE 25: ESC 2023 Guidelines -->
+
+<div class="slide" data-slide="32">
+  <h2>ESC 2023 Focused Update — HF Guidelines</h2>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-green">
+        <h3>Class I Recommendation (Level A)</h3>
+        <p><strong>IV iron supplementation is recommended</strong> in symptomatic patients with HFrEF and HFmrEF, and iron deficiency, to alleviate HF symptoms and improve quality of life.</p>
+        <p class="text-dim small mt-8">Upgraded from Class IIa in ESC 2021.</p>
+      </div>
+      <div class="card card-blue mt-8">
+        <h3>Class IIa Recommendation (Level A)</h3>
+        <p>IV iron supplementation with FCM or FDI should be considered to <strong>reduce the risk of HF hospitalization.</strong></p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Other Guidelines</h3>
+        <table>
+          <tr><th>Body</th><th>Recommendation</th></tr>
+          <tr><td>ACC/AHA/HFSA 2022</td><td>Class 2a (IV iron in HFrEF + ID) — improves functional status and QoL</td></tr>
+          <tr><td>HFSA 2023 Scientific Statement</td><td>Emphasized screening and coordinated ID management in HF</td></tr>
+        </table>
+      </div>
+      <div class="key-msg mt-8">
+        <strong>FDA 2024:</strong> First HF indication granted to FCM (Injectafer) to improve exercise capacity in HF patients with ID.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 26: FAIR-HF2 Sex-Specific -->
+
+<div class="slide" data-slide="33">
+  <h2>FAIR-HF2 — Sex-Specific Outcomes</h2>
+  <div class="card card-red">
+    <h3>Karakas M et al. <em>Eur J Heart Fail</em> 2025</h3>
+    <p>Sex-specific analysis of 1,105 HF patients (LVEF ≤45% + ID) randomized to FCM vs placebo.</p>
+  </div>
+  <div class="flex-row mt-16">
+    <div class="flex-1">
+      <div class="card" style="border:2px solid var(--green);">
+        <h3 style="color:var(--green);">Men (n=737)</h3>
+        <table>
+          <tr><th>Endpoint</th><th>HR/RR</th><th>p-value</th></tr>
+          <tr><td>CV death + 1st HF hosp</td><td>HR 0.74</td><td>0.016</td></tr>
+          <tr><td>Total HF hospitalizations</td><td>RR 0.79</td><td>0.136</td></tr>
+          <tr><td>CV death/HF hosp (TSAT&lt;20%)</td><td>HR 0.73</td><td>0.028</td></tr>
+          <tr><td>All-cause mortality</td><td>HR 0.86</td><td>0.33</td></tr>
+        </table>
+        <p class="text-dim small mt-8">Clinically relevant reduction in CV death and HF hospitalizations.</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card" style="border:2px solid var(--red);">
+        <h3 style="color:var(--red);">Women (n=368)</h3>
+        <table>
+          <tr><th>Endpoint</th><th>HR/RR</th><th>p-value</th></tr>
+          <tr><td>CV death + 1st HF hosp</td><td>HR 1.07</td><td>0.80</td></tr>
+          <tr><td>Total HF hospitalizations</td><td>RR 1.06</td><td>0.86</td></tr>
+          <tr><td>CV death/HF hosp (TSAT&lt;20%)</td><td>HR 1.21</td><td>0.58</td></tr>
+          <tr><td>All-cause mortality</td><td>HR 1.46</td><td>0.24</td></tr>
+        </table>
+        <p class="text-dim small mt-8">No benefit observed. Potential mortality signal (p-for-interaction = 0.13).</p>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Clinical implication:</strong> This sex-specific analysis is exploratory and hypothesis-generating. It is a subgroup finding from a trial not powered for sex-stratified outcomes. Current practice should not be changed based on this single analysis, but awareness and further research are warranted.
+  </div>
+</div>
+
+<!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="34">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 7</p>
+    <h1>Special Populations</h1>
+    <p style="color:var(--text-dim);">CKD, pregnancy, IBD, and GI evaluation</p>
+  </div>
+</div>
+
+<!-- SLIDE 28: CKD -->
+
+<div class="slide" data-slide="35">
+  <h2>Iron Deficiency in Chronic Kidney Disease</h2>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-accent">
+        <h3>PIVOTAL Trial — Macdougall et al. <em>NEJM</em> 2019 <span class="pmid">PMID: 30462937</span></h3>
+        <p>2,141 hemodialysis patients randomized to <strong>proactive high-dose IV iron</strong> (400 mg monthly, max ferritin 700 µg/L or TSAT 40%) vs <strong>reactive low-dose IV iron</strong> (triggered by ferritin &lt;200 µg/L or TSAT &lt;20%).</p>
+        <table class="mt-8">
+          <tr><th>Outcome</th><th>Proactive</th><th>Reactive</th><th>HR</th><th>p-value</th></tr>
+          <tr><td>Primary: Death/MI/stroke/HF hosp</td><td>29.3%</td><td>32.7%</td><td>0.85</td><td>0.004</td></tr>
+          <tr><td>ESA dose</td><td colspan="2">Significant reduction with proactive iron</td><td>—</td><td>&lt;0.001</td></tr>
+          <tr><td>Blood transfusions</td><td>20.8%</td><td>27.7%</td><td>0.72</td><td>&lt;0.001</td></tr>
+          <tr><td>Infection (safety)</td><td colspan="2">No difference between groups</td><td>—</td><td>NS</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>KDIGO Anemia Guidelines (2025 Update)</h3>
+        <ul>
+          <li>Monitor Hb and iron indices regularly in CKD</li>
+          <li>IV iron preferred over oral for CKD G5/G5D</li>
+          <li>Target ferritin 200–500 µg/L in dialysis patients on ESA</li>
+          <li>Proactive iron repletion strategy advocated</li>
+        </ul>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Key Takeaways</h3>
+        <ul>
+          <li>Proactive high-dose IV iron is <strong>superior</strong> to reactive strategy</li>
+          <li>Reduces ESA requirements and transfusions</li>
+          <li>No increase in infection risk</li>
+          <li>Ferric derisomaltose/FCM are preferred formulations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 29: Pregnancy -->
+
+<div class="slide" data-slide="36">
+  <h2>Iron Deficiency in Pregnancy</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>UK Guidelines — Pavord et al. <em>Br J Haematol</em> 2020 <span class="pmid">PMID: 31578717</span></h3>
+        <table>
+          <tr><th>Trimester</th><th>Anemia Cutoff (Hb)</th></tr>
+          <tr><td>1st trimester</td><td>&lt;110 g/L</td></tr>
+          <tr><td>2nd/3rd trimester</td><td>&lt;105 g/L</td></tr>
+          <tr><td>Postpartum</td><td>&lt;100 g/L</td></tr>
+        </table>
+      </div>
+      <div class="card card-blue mt-8">
+        <h3>Iron Requirements During Pregnancy</h3>
+        <ul>
+          <li>Total iron demand: ~1,000 mg</li>
+          <li>1st trimester: ~0.8 mg/day</li>
+          <li>3rd trimester: ~7.5 mg/day</li>
+          <li>Fetal iron demand takes priority over maternal</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>Treatment Approach</h3>
+        <ul>
+          <li><strong>Mild IDA (Hb 100–109 g/L):</strong> Oral iron first-line. Reassess at 2–3 weeks.</li>
+          <li><strong>Moderate-severe IDA (Hb &lt;100 g/L):</strong> Consider IV iron.</li>
+          <li><strong>IV iron:</strong> Safe from 2nd trimester onward.</li>
+          <li>Ferric derisomaltose: single total-dose infusion (up to 1,000–1,500 mg)</li>
+          <li>Iron sucrose: multiple infusions of 200 mg</li>
+        </ul>
+      </div>
+      <div class="card card-amber mt-8">
+        <h3>FLIP Study (2025)</h3>
+        <p>Ferric derisomaltose vs iron sucrose in pregnancy: FDI enabled shorter total infusion time (252 vs 410 min, p&lt;0.0001), fewer visits, and higher treatment completion rates. Clinic throughput increased ~50%.</p>
+        <p class="text-muted small">Lin Y, VanderMeulen H et al. <em>JOGC</em> 2025</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 30: IBD -->
+
+<div class="slide" data-slide="37">
+  <h2>Iron Deficiency in Inflammatory Bowel Disease</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-red">
+        <h3>Magnitude of the Problem</h3>
+        <ul>
+          <li>ID prevalence in IBD: <strong>36–90%</strong></li>
+          <li>Most common extraintestinal manifestation</li>
+          <li>Causes: Chronic GI bleeding, impaired duodenal absorption (inflammation → hepcidin), reduced oral intake</li>
+          <li>Anemia independently associated with ↓ QoL and ↑ healthcare utilization</li>
+        </ul>
+      </div>
+      <div class="card card-accent mt-8">
+        <h3>ECCO Guidelines — IV Iron Preferred</h3>
+        <ul>
+          <li>IV iron bypasses impaired absorption and avoids GI irritation</li>
+          <li>FCM and ferric derisomaltose are both effective</li>
+          <li>Oral iron can be attempted in mild, inactive disease</li>
+          <li>Target: Hb normalization + ferritin &gt;100 µg/L</li>
+          <li>Monitor iron indices with disease activity assessments</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>Kulnigg et al. — FCM in IBD <span class="pmid">PMID: 18194574</span></h3>
+        <table>
+          <tr><th>Group</th><th>Result</th></tr>
+          <tr><td>IV FCM (n=136)</td><td>Hb +3.1 g/dL at wk 12</td></tr>
+          <tr><td>Oral FeSO₄ (n=60)</td><td>Hb +1.8 g/dL at wk 12</td></tr>
+          <tr><td colspan="2">IV iron superior (p&lt;0.001); better tolerability</td></tr>
+        </table>
+      </div>
+      <div class="key-msg mt-8">
+        <strong>Practice point:</strong> In active IBD, IV iron is the preferred route. Ferritin cutoff for diagnosis is &lt;100 µg/L (adjusted for inflammation). Correcting ID improves QoL independently of disease activity.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 38 -->
+<div class="slide" data-slide="38">
+  <h2>Iron Deficiency Without Anemia — To Treat or Not to Treat?</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>Arguments FOR Treating IDWA</h3>
+        <ul>
+          <li>Fatigue improves with iron (Verdon et al. <em>BMJ</em> 2003 <span class="pmid">PMID: 12870203</span> — RCT: iron improved fatigue in non-anemic women)</li>
+          <li>Cognitive function may improve</li>
+          <li>RLS responds to iron (brain iron deficiency)</li>
+          <li>Hair loss (telogen effluvium) — ferritin &lt;70 is a common contributor</li>
+          <li>Pre-operative optimization reduces transfusion</li>
+          <li>Prevents progression to IDA</li>
+          <li>HF: guideline-mandated regardless of Hb (ESC Class I)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-red">
+        <h3>Arguments AGAINST Treating All IDWA</h3>
+        <ul>
+          <li>NNT for fatigue improvement is modest (~5–10)</li>
+          <li>Placebo effect in fatigue studies is significant</li>
+          <li>Oral iron side effects in someone with normal Hb may not be worth it</li>
+          <li>Overmedicalization: "treating a lab value, not a patient"</li>
+          <li>Long-term iron supplementation safety in normal-Hb individuals not well studied</li>
+          <li>Cost of IV iron for widespread IDWA screening</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Clinical consensus (2024–2026):</strong> Treat IDWA when (1) symptoms are present and attributable, (2) ongoing risk of progression to IDA (HMB, pregnancy, surgery), or (3) high-risk comorbidity (HF, CKD). Do NOT treat asymptomatic IDWA with normal Hb in a patient with no risk factors — monitor instead. This is an important teaching point: we treat <strong>patients</strong>, not ferritin levels.
+  </div>
+</div><!-- SLIDE 39 -->
+<div class="slide" data-slide="39">
+  <h2>IRIDA — When Oral Iron Fails Despite Perfect Adherence</h2>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-red">
+        <h3>Iron-Refractory Iron Deficiency Anemia (OMIM #206200)</h3>
+        <ul>
+          <li><strong>Genetics:</strong> Autosomal recessive; <em>TMPRSS6</em> mutations → impaired matriptase-2 → <strong>hepcidin excess</strong></li>
+          <li><strong>Pathophysiology:</strong> Matriptase-2 normally cleaves hemojuvelin → suppresses hepcidin. Loss-of-function → unopposed hepcidin production → ferroportin blockade → enterocyte iron trapped</li>
+          <li><strong>Key features:</strong> Microcytic anemia from infancy/childhood; no response to oral iron; partial response to IV iron; inappropriately normal/high hepcidin; low TSAT despite normal/high ferritin</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Diagnostic Clues</h3>
+        <ul>
+          <li>Microcytic anemia refractory to ≥2 courses oral iron</li>
+          <li>Family history (autosomal recessive)</li>
+          <li>Consanguinity increases probability</li>
+          <li>Normal CRP — no inflammatory confound</li>
+          <li>Genetic testing: <em>TMPRSS6</em> sequencing</li>
+        </ul>
+      </div>
+      <div class="card card-blue mt-8">
+        <h3>Management</h3>
+        <ul>
+          <li><strong>IV iron is the mainstay</strong> — bypasses enterocyte blockade</li>
+          <li>Response is partial (hepcidin also blocks macrophage recycling)</li>
+          <li>Higher doses and more frequent infusions often needed</li>
+          <li>Emerging: hepcidin antagonists (clinical trials)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Teaching point:</strong> IRIDA explains why some patients truly cannot absorb oral iron. It is rare but underdiagnosed. Consider in any patient who has failed ≥2 proper oral iron trials with proven compliance. IRIDA is NOT "non-adherence" — it's a genetic disorder of iron regulation. Testing for <em>TMPRSS6</em> mutations is definitive.
+  </div>
+  <p class="text-muted small">Finberg KE et al. <em>Nat Genet</em> 2008 <span class="pmid">PMID: 18408718</span> &bull; De Falco L et al. <em>Haematologica</em> 2013 <span class="pmid">PMID: 23300179</span></p>
+</div><!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="40">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 8</p>
+    <h1>Guideline-Directed<br>Investigation</h1>
+    <p style="color:var(--text-dim);">BSG 2021 — investigating the underlying cause</p>
+  </div>
+</div>
+
+<!-- SLIDE 32: BSG Guidelines -->
+
+<div class="slide" data-slide="41">
+  <h2>BSG 2021 — Investigation of IDA in Adults</h2>
+  <div class="flex-row">
+    <div class="flex-2">
+      <div class="card card-red">
+        <h3>Snook J et al. <em>Gut</em> 2021 <span class="pmid">PMID: 34497146</span></h3>
+        <p><strong>~1 in 3 men and postmenopausal women with IDA have an underlying GI pathology</strong> — most commonly colorectal cancer, gastric cancer, or coeliac disease.</p>
+      </div>
+      <div class="card card-accent mt-8">
+        <h3>Who Needs Urgent Investigation?</h3>
+        <ul>
+          <li><strong>All men</strong> with unexplained IDA</li>
+          <li><strong>All postmenopausal women</strong> with unexplained IDA</li>
+          <li><strong>Premenopausal women</strong> with IDA and any "red flag" symptoms (weight loss, change in bowel habit, rectal bleeding, family history of CRC)</li>
+        </ul>
+      </div>
+      <div class="card card-blue mt-8">
+        <h3>Investigation Algorithm</h3>
+        <ol>
+          <li><strong>Serology:</strong> Anti-tTG (coeliac screen) — consider in ALL patients</li>
+          <li><strong>Bidirectional endoscopy:</strong> OGD + colonoscopy (or CT colonography)</li>
+          <li><strong>If negative:</strong> Wireless capsule endoscopy (small bowel evaluation)</li>
+          <li><strong>FIT (fecal immunochemical test):</strong> Updated BSG/ACPGBI 2025 — triage tool to prioritize endoscopic investigation</li>
+        </ol>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>BSG — Iron Replacement</h3>
+        <ul>
+          <li>Ferritin &lt;15 µg/L: diagnostic in uncomplicated patients</li>
+          <li>Ferritin 15–50 µg/L + low MCV/MCH: probable ID</li>
+          <li><strong>Oral ferrous sulfate</strong> first-line</li>
+          <li>IV iron if: intolerant, non-responsive, severe anemia (Hb &lt;80 g/L), active IBD, or need for rapid correction</li>
+        </ul>
+      </div>
+      <div class="card card-amber mt-8">
+        <h3>AGA 2020 Guidelines <span class="pmid">PMID: 32673793</span></h3>
+        <ul>
+          <li>Bidirectional endoscopy recommended</li>
+          <li>Non-invasive testing with FIT/fecal calprotectin may guide triage</li>
+          <li>Routine small bowel evaluation not recommended after negative bidirectional endoscopy in asymptomatic patients</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 33: Etiologies -->
+
+<div class="slide" data-slide="42">
+  <h2>Etiology of Iron Deficiency — A Systematic Approach</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-red">
+        <h3>Blood Loss</h3>
+        <ul>
+          <li><strong>GI:</strong> CRC, gastric cancer, PUD, angiodysplasia, esophagitis, NSAID enteropathy, hookworm (LMICs)</li>
+          <li><strong>Gynecologic:</strong> Heavy menstrual bleeding, uterine fibroids, adenomyosis</li>
+          <li><strong>Other:</strong> Frequent blood donation, epistaxis, hematuria</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-amber">
+        <h3>Decreased Absorption</h3>
+        <ul>
+          <li><strong>GI surgery:</strong> Gastrectomy, gastric bypass, duodenal switch</li>
+          <li><strong>Mucosal disease:</strong> Coeliac disease, H. pylori gastritis, atrophic gastritis, IBD</li>
+          <li><strong>Drugs:</strong> PPIs, H2 blockers, antacids (↓ gastric acid → ↓ Fe³⁺ → Fe²⁺ reduction)</li>
+          <li><strong>H. pylori infection:</strong> Competes for iron, causes chronic gastritis → impaired absorption; eradication improves iron status</li>
+          <li><strong>IRIDA:</strong> TMPRSS6 mutation → hepcidin excess</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="flex-row mt-8">
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Increased Demand</h3>
+        <ul>
+          <li>Pregnancy and lactation</li>
+          <li>Infancy and adolescence (growth)</li>
+          <li>Erythropoiesis-stimulating agent therapy</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>Inadequate Intake</h3>
+        <ul>
+          <li>Vegetarian/vegan diet (non-heme iron only)</li>
+          <li>Malnutrition, food insecurity</li>
+          <li>Elderly (poor dentition, reduced appetite)</li>
+          <li>Institutionalized populations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="43">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 9</p>
+    <h1>Clinical Workflow &amp;<br>Practical Management</h1>
+    <p style="color:var(--text-dim);">From diagnosis to iron repletion</p>
+  </div>
+</div>
+
+<!-- SLIDE 35: Management Algorithm -->
+
+<div class="slide" data-slide="44" style="font-size:0.9rem;">
+  <h2 style="margin-bottom:12px;">Clinical Approach to Iron Deficiency</h2>
+  <div style="max-width:900px; margin:0 auto;">
+    <div class="card card-accent" style="text-align:center;padding:8px 16px;margin-bottom:4px;">
+      <p style="font-size:1rem;margin:0;"><strong>Step 1:</strong> Confirm iron deficiency — Ferritin + TSAT + CBC</p>
+    </div>
+    <div style="text-align:center;font-size:0.9rem;color:var(--accent);line-height:1;padding:0;">↓</div>
+    <div class="card card-accent" style="text-align:center;padding:8px 16px;margin-bottom:4px;">
+      <p style="font-size:1rem;margin:0;"><strong>Step 2:</strong> Identify cause — History, coeliac screen, GI evaluation (per BSG), gynecologic assessment</p>
+    </div>
+    <div style="text-align:center;font-size:0.9rem;color:var(--accent);line-height:1;padding:0;">↓</div>
+    <div class="card card-accent" style="text-align:center;padding:8px 16px;margin-bottom:8px;">
+      <p style="font-size:1rem;margin:0;"><strong>Step 3:</strong> Treat underlying cause + Iron repletion</p>
+    </div>
+    <div class="flex-row mt-8" style="gap:16px;">
+      <div class="flex-1 card card-green" style="text-align:center;padding:12px;">
+        <h3 style="font-size:1.05rem;margin-bottom:4px;">Oral Iron</h3>
+        <p style="font-size:0.85rem;margin-bottom:2px;">Mild IDA, no malabsorption, no active inflammation</p>
+        <p class="small text-dim" style="margin:0;">Alternate-day, morning dose &bull; Reassess Hb at 2–4 wk</p>
+      </div>
+      <div class="flex-1 card card-blue" style="text-align:center;padding:12px;">
+        <h3 style="font-size:1.05rem;margin-bottom:4px;">IV Iron</h3>
+        <p style="font-size:0.85rem;margin-bottom:2px;">Severe anemia (Hb &lt;80 g/L), intolerance, malabsorption, active IBD, HF, CKD</p>
+        <p class="small text-dim" style="margin:0;">Choose formulation per dose, comorbidities, hypophosphatemia risk</p>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:0.9rem;color:var(--accent);line-height:1;padding:0;">↓</div>
+    <div class="card card-amber" style="text-align:center;padding:10px 16px;margin:4px auto;max-width:700px;">
+      <p style="font-size:0.95rem;margin:0;"><strong>Decision Node:</strong> If Hb rise &lt;1 g/dL at 2–4 wk on oral iron → <strong>switch to IV iron.</strong> Do not rotate through multiple oral formulations.</p>
+    </div>
+    <div style="text-align:center;font-size:0.9rem;color:var(--accent);line-height:1;padding:0;">↓</div>
+    <div class="card card-accent" style="text-align:center;padding:8px 16px;margin-top:4px;">
+      <p style="font-size:1rem;margin:0;"><strong>Step 4:</strong> Monitor — Hb, ferritin, TSAT at 4–12 wk after repletion. Continue oral iron × 3–6 mo after Hb normalization.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 36: IV vs Oral Meta-analysis -->
+
+<div class="slide" data-slide="45">
+  <h2>IV vs Oral Iron — Evidence Synthesis</h2>
+  <div class="card card-accent">
+    <h3>Zhao C &amp; He W. Meta-Analysis (31 RCTs) — <em>Med Int</em> 2026</h3>
+    <table>
+      <tr><th>Population</th><th>SMD (Hb increase)</th><th>p-value</th><th>Conclusion</th></tr>
+      <tr><td>Cancer-related anemia</td><td>-0.662</td><td>0.011</td><td><span class="tag tag-green">IV superior</span></td></tr>
+      <tr><td>CKD</td><td>-0.492</td><td>0.035</td><td><span class="tag tag-green">IV superior</span></td></tr>
+      <tr><td>IBD</td><td>-0.560</td><td>&lt;0.001</td><td><span class="tag tag-green">IV superior</span></td></tr>
+      <tr><td>General IDA</td><td>-0.397</td><td>&lt;0.001</td><td><span class="tag tag-green">IV superior</span></td></tr>
+      <tr><td>Postoperative anemia</td><td colspan="3">No significant difference</td></tr>
+      <tr><td>Restless legs syndrome</td><td colspan="3">No significant difference</td></tr>
+    </table>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Bottom line:</strong> IV iron provides faster Hb correction and fewer GI side effects across most clinical contexts. The decision between IV and oral should be individualized based on severity, acuity, etiology, and patient preference. Oral iron remains appropriate first-line for mild, uncomplicated IDA in patients who can tolerate and absorb it.
+  </div>
+</div>
+
+<!-- SLIDE 37: Choosing IV Formulation -->
+
+<div class="slide" data-slide="46">
+  <h2>Choosing the Right IV Iron Formulation</h2>
+  <table>
+    <tr><th>Clinical Scenario</th><th>Preferred IV Iron</th><th>Rationale</th></tr>
+    <tr><td>HFrEF/HFmrEF + ID</td><td><span class="tag tag-green">FCM</span> or <span class="tag tag-green">FDI</span></td><td>Most robust trial evidence (FAIR-HF, AFFIRM-AHF, IRONMAN)</td></tr>
+    <tr><td>CKD (hemodialysis)</td><td><span class="tag tag-blue">Iron sucrose</span> or <span class="tag tag-green">FCM</span></td><td>PIVOTAL evidence; flexible dosing</td></tr>
+    <tr><td>Pregnancy (2nd/3rd trimester)</td><td><span class="tag tag-green">FDI</span> or <span class="tag tag-blue">Iron sucrose</span></td><td>FDI: single-visit total-dose; Iron sucrose: extensive safety data</td></tr>
+    <tr><td>Active IBD</td><td><span class="tag tag-green">FCM</span> or <span class="tag tag-green">FDI</span></td><td>High-dose, rapid correction; bypasses absorption</td></tr>
+    <tr><td>Heavy menstrual bleeding</td><td><span class="tag tag-blue">Ferumoxytol</span> or <span class="tag tag-green">FCM</span></td><td>Rapid high-dose; outpatient administration</td></tr>
+    <tr><td>Pre-op anemia (elective surgery)</td><td><span class="tag tag-green">FDI</span> or <span class="tag tag-blue">Ferumoxytol</span></td><td>Single-visit correction; minimize hypophosphatemia risk</td></tr>
+    <tr><td>Osteoporosis / CKD-MBD risk</td><td><span class="tag tag-green">FDI</span> or <span class="tag tag-blue">Ferumoxytol</span></td><td><strong>Avoid FCM</strong> — hypophosphatemia/osteomalacia risk</td></tr>
+    <tr><td>Need total-dose in 1 visit</td><td><span class="tag tag-green">FDI</span> or <span class="tag tag-amber">LMW iron dextran</span></td><td>FDI up to 20 mg/kg; dextran up to 1,000 mg</td></tr>
+  </table>
+  <div class="key-msg mt-16">
+    <strong>Principle:</strong> Match the formulation to the clinical context. Consider total dose required, visit logistics, comorbidities, and formulation-specific adverse effect profiles (especially hypophosphatemia with FCM).
+  </div>
+</div>
+
+<!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="47">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 10</p>
+    <h1>Case Vignettes</h1>
+    <p style="color:var(--text-dim);">Applying the evidence to clinical practice</p>
+  </div>
+</div>
+
+<!-- SLIDE 39: Case 1 -->
+
+<div class="slide" data-slide="48">
+  <h2>Case 1 — The Young Woman with Fatigue</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Presentation</h3>
+        <p>A 28-year-old woman presents with 6 months of progressive fatigue, poor concentration, and exercise intolerance. Menstrual cycles are regular with 7 days of heavy flow. Vegetarian diet. No GI symptoms.</p>
+        <p class="text-dim small mt-8">Hb 9.8 g/dL, MCV 74 fL, MCH 24 pg, RDW 17%<br>Ferritin 8 µg/L, TSAT 9%, serum iron 20 µg/dL, TIBC 480 µg/dL</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Diagnosis &amp; Plan</h3>
+        <ul>
+          <li><strong>Diagnosis:</strong> Iron deficiency anemia (Stage 3) due to heavy menstrual bleeding + low dietary iron intake</li>
+          <li>Start oral ferrous sulfate 65 mg elemental iron, alternate-day dosing (M/W/F)</li>
+          <li>Coeliac screen: anti-tTG</li>
+          <li>Gynecology referral for HMB management</li>
+          <li>Dietary counseling — increase heme iron sources</li>
+        </ul>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Expected Course</h3>
+        <ul>
+          <li>Check Hb and reticulocyte count at 2–4 weeks</li>
+          <li>Expected: Hb increase ~1 g/dL by week 2, ~2 g/dL by week 4</li>
+          <li>Continue iron × 3 months after Hb normalizes</li>
+          <li>Target ferritin &gt;50 µg/L</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Teaching point:</strong> Ferritin &lt;15 µg/L has &gt;99% specificity for iron deficiency. In menstruating women with clear etiology (HMB), extensive GI investigation is not required unless red flags are present. ASH 2023 suggests using ferritin ≤50 ng/mL for symptomatic women with HMB.
+  </div>
+</div>
+
+<!-- SLIDE 40: Case 2 -->
+
+<div class="slide" data-slide="49">
+  <h2>Case 2 — The Elderly Man with Anemia</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-red">
+        <h3>Presentation</h3>
+        <p>A 72-year-old man presents with progressive dyspnea on exertion and pallor over 3 months. No overt GI bleeding, but reports dark stools intermittently. Mild epigastric discomfort. On aspirin 75 mg daily.</p>
+        <p class="text-dim small mt-8">Hb 7.4 g/dL, MCV 71 fL, ferritin 10 µg/L, TSAT 6%</p>
+      </div>
+      <div class="card card-amber mt-8">
+        <h3>Urgent Actions</h3>
+        <ul>
+          <li><strong>IV iron:</strong> Ferric carboxymaltose 1,000 mg (or FDI 1,000 mg) for rapid Hb correction</li>
+          <li>Stool FIT testing</li>
+          <li>Arrange <strong>urgent bidirectional endoscopy</strong> (OGD + colonoscopy)</li>
+          <li>Stop aspirin if possible pending investigation</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Investigation Findings</h3>
+        <p>OGD: 3 cm antral ulcer with visible vessel (Forrest IIa). Biopsies negative for H. pylori and malignancy.</p>
+        <p>Colonoscopy: 2 tubular adenomas (low-grade dysplasia), no malignancy.</p>
+      </div>
+      <div class="card card-green mt-8">
+        <h3>Final Plan</h3>
+        <ul>
+          <li>Endoscopic therapy for ulcer</li>
+          <li>PPI therapy + discontinue aspirin (or replace with PPI co-therapy)</li>
+          <li>Repeat iron indices at 4 weeks — expected normalization of Hb</li>
+          <li>Surveillance colonoscopy per adenoma guidelines</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Teaching point:</strong> All men with unexplained IDA require urgent GI investigation. ~30% will have a significant GI pathology. The BSG mandates bidirectional endoscopy. IV iron is preferred for severe anemia (Hb &lt;80 g/L) to enable rapid correction while awaiting investigation.
+  </div>
+</div>
+
+<!-- SLIDE 41: Case 3 -->
+
+<div class="slide" data-slide="50">
+  <h2>Case 3 — The HF Patient with Iron Deficiency</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Presentation</h3>
+        <p>A 67-year-old man with ischemic cardiomyopathy (LVEF 35%, NYHA Class III) on optimal medical therapy (ACEi, beta-blocker, MRA, SGLT2i). Persistent dyspnea and fatigue despite euvolemia.</p>
+        <p class="text-dim small mt-8">Hb 12.8 g/dL (normal), MCV 82 fL<br>Ferritin 72 µg/L, TSAT 16%</p>
+      </div>
+      <div class="card card-blue mt-8">
+        <h3>Analysis</h3>
+        <ul>
+          <li><strong>Not anemic</strong> — but meets ESC criteria for ID in HF (ferritin &lt;100 µg/L)</li>
+          <li>Iron deficiency without anemia (IDWA) — common and treatable contributor to symptoms</li>
+          <li>TSAT &lt;20% confirms functional iron deficiency</li>
+          <li>Oral iron is <strong>ineffective</strong> in HF due to hepcidin-mediated blockade</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-green">
+        <h3>Management</h3>
+        <ul>
+          <li><strong>IV ferric carboxymaltose</strong> — per ESC Class I recommendation</li>
+          <li>Dose: 1,000 mg (weight-based), repeat per ferritin/TSAT monitoring</li>
+          <li>Expected: Improved 6MWT, NYHA class, KCCQ score, and reduced HF hospitalization risk</li>
+          <li>Reassess at 4, 12, 24, and 52 weeks</li>
+        </ul>
+      </div>
+      <div class="card card-amber mt-8">
+        <h3>FAIR-HF2 Caution</h3>
+        <p>Sex-specific analysis suggests the clearest benefit is in men. The patient is male — benefit expected. For women with HF + ID, discuss the uncertainty from FAIR-HF2 but current ESC guidelines do not differentiate by sex.</p>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Teaching point:</strong> In HF, ID treatment is guideline-directed <strong>regardless of hemoglobin level.</strong> Non-anemic ID in HF carries prognostic significance and is treatable. IV iron (not oral) is the evidence-based route.
+  </div>
+</div>
+
+<!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="51">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 11</p>
+    <h1>Emerging Topics &amp;<br>Future Directions</h1>
+    <p style="color:var(--text-dim);">New therapies, controversies, and unanswered questions</p>
+  </div>
+</div>
+
+<!-- SLIDE 43: Emerging Therapies -->
+
+<div class="slide" data-slide="52">
+  <h2>Emerging Therapies &amp; Future Directions</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Hepcidin-Targeting Therapies</h3>
+        <ul>
+          <li><strong>Anti-hepcidin antibodies / aptamers:</strong> Block hepcidin to release trapped iron in inflammatory anemia</li>
+          <li><strong>Ferroportin stabilizers:</strong> VIT-2763 (oral small molecule) — inhibits hepcidin-ferroportin interaction; Phase 2 trials in β-thalassemia</li>
+          <li><strong>BMP/SMAD pathway inhibitors:</strong> Suppress hepatic hepcidin production</li>
+        </ul>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-blue">
+        <h3>Novel Iron Formulations</h3>
+        <ul>
+          <li><strong>Sucrosomial iron:</strong> Oral iron with phospholipid + sucrose ester matrix — bypasses gastric absorption route; reduced GI side effects</li>
+          <li><strong>Iron hydroxide adipate tartrate (IHAT):</strong> Nanoparticle oral iron with improved GI tolerability and absorption profile</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card card-amber mt-16">
+    <h3>Key Unanswered Questions</h3>
+    <ul>
+      <li>Does IV iron improve <strong>hard mortality endpoints</strong> in HF? (HEART-FID, FAIR-HF2, and future trials)</li>
+      <li>Why do <strong>women with HF not benefit</strong> from IV iron in FAIR-HF2? Biological difference or statistical artifact?</li>
+      <li>What is the <strong>long-term safety</strong> of repeated high-dose IV iron (iron overload, oxidative stress, infection risk)?</li>
+      <li>Is hypophosphatemia from FCM <strong>clinically consequential</strong> in the long term? Screening and monitoring protocols needed.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 53 -->
+<div class="slide" data-slide="53">
+  <h2>Special Populations — Athletes &amp; Pediatrics</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent">
+        <h3>Iron Deficiency in Athletes</h3>
+        <ul>
+          <li><strong>Prevalence:</strong> 15–35% of female athletes; 5–10% of male athletes</li>
+          <li><strong>Mechanisms:</strong> Exercise-induced hepcidin rise (IL-6), foot-strike hemolysis (runners), GI bleeding (endurance), sweat losses</li>
+          <li><strong>Consequences:</strong> Impaired VO₂ max, reduced endurance, slower recovery</li>
+          <li><strong>Management:</strong> Screen ferritin annually. Target ferritin &gt;50 µg/L. Oral iron first-line; IV if rapid correction needed pre-competition</li>
+          <li>"Sports anemia": dilutional pseudo-anemia from plasma volume expansion — ferritin is normal; do NOT treat</li>
+        </ul>
+        <p class="text-muted small">Peeling P et al. <em>Sports Med</em> 2017 &bull; Sim M et al. <em>Eur J Appl Physiol</em> 2019</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-red">
+        <h3>Pediatric Iron Deficiency</h3>
+        <ul>
+          <li><strong>Critical window:</strong> 0–3 years — brain iron accumulation essential for myelination, dopamine synthesis, hippocampal development</li>
+          <li><strong>Neurodevelopmental consequences:</strong> Irreversible cognitive deficits even after iron repletion (Lozoff et al. longitudinal studies)</li>
+          <li><strong>Screening:</strong> AAP recommends universal screening at 12 months</li>
+          <li><strong>Prevention:</strong> Iron-fortified formula, delayed cord clamping, limit cow's milk (&lt;600 mL/day after 12 mo)</li>
+          <li><strong>Treatment:</strong> 3–6 mg/kg/day elemental iron. IV iron reserved for severe cases or oral intolerance</li>
+        </ul>
+        <p class="text-muted small">Lozoff B et al. <em>J Pediatr</em> 2006 <span class="pmid">PMID: 16887449</span> &bull; AAP Clinical Report 2010</p>
+      </div>
+    </div>
+  </div>
+  <div class="key-msg mt-16">
+    <strong>Teaching point:</strong> In athletes, distinguish true ID (low ferritin) from dilutional sports anemia (normal ferritin). In children, iron deficiency during the first 1000 days causes neurodevelopmental harm that may not be reversible — prevention through screening and supplementation is crucial.
+  </div>
+</div><!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="54">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">Section 12</p>
+    <h1>Take-Home Messages</h1>
+    <p style="color:var(--text-dim);">Key clinical pearls</p>
+  </div>
+</div>
+
+<!-- SLIDE 45: Take-Home Messages -->
+
+<div class="slide" data-slide="55">
+  <h2>Take-Home Messages</h2>
+  <div class="flex-row">
+    <div class="flex-1">
+      <div class="card card-accent" style="min-height:120px;">
+        <h3>1. Think Beyond Hemoglobin</h3>
+        <p>Iron deficiency without anemia is at least twice as common as IDA and causes fatigue, cognitive impairment, and poor outcomes. Screen with ferritin + TSAT in at-risk populations.</p>
+      </div>
+      <div class="card card-blue mt-8" style="min-height:120px;">
+        <h3>2. Ferritin Cutoffs Are Rising</h3>
+        <p>ASH 2023 moves toward ≤30 ng/mL (adults), ≤50 ng/mL (symptomatic). In inflammation (HF, CKD, IBD), use ferritin &lt;100 µg/L or TSAT &lt;20%.</p>
+      </div>
+      <div class="card card-green mt-8" style="min-height:120px;">
+        <h3>3. Alternate-Day Oral Iron</h3>
+        <p>Single morning dose every other day — 34% higher absorption than daily dosing (Stoffel 2017). Hepcidin-mediated; improves tolerability. Vitamin C adds no meaningful benefit.</p>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="card card-red" style="min-height:120px;">
+        <h3>4. IV Iron Is Safe &amp; Effective</h3>
+        <p>Modern IV iron formulations enable rapid, total-dose replacement with minimal risk. Preferred over oral in HF, CKD, active IBD, severe anemia, and malabsorption.</p>
+      </div>
+      <div class="card card-amber mt-8" style="min-height:120px;">
+        <h3>5. HF: Guideline-Directed ID Treatment</h3>
+        <p>ESC Class I: IV iron for symptomatic HFrEF/HFmrEF + ID — regardless of hemoglobin. Reduces HF hospitalizations and improves QoL. ID screening is standard of care.</p>
+      </div>
+      <div class="card card-accent mt-8" style="min-height:120px;">
+        <h3>6. Find the Cause</h3>
+        <p>IDA in men and postmenopausal women = urgent GI investigation (BSG). ~30% have significant pathology. Coeliac screen in all unexplained IDA. Don't just replace iron — diagnose the underlying etiology.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 46: Summary Table -->
+
+<div class="slide" data-slide="56">
+  <h2>Summary — Iron Deficiency by Clinical Context</h2>
+  <table>
+    <tr><th>Context</th><th>Definition</th><th>1st-Line Rx</th><th>Key Trial/Guide</th></tr>
+    <tr>
+      <td><strong>General IDA</strong></td>
+      <td>Ferritin &lt;30 µg/L + anemia</td>
+      <td>Oral iron (alternate-day)</td>
+      <td>ASH 2023; BSG 2021 <span class="pmid">PMID: 34497146</span></td>
+    </tr>
+    <tr>
+      <td><strong>HFrEF/HFmrEF</strong></td>
+      <td>Ferritin &lt;100 or (100–299 + TSAT &lt;20%)</td>
+      <td>IV FCM or FDI — Class I ESC 2023</td>
+      <td>AFFIRM-AHF, IRONMAN, FAIR-HF2</td>
+    </tr>
+    <tr>
+      <td><strong>CKD (HD)</strong></td>
+      <td>Ferritin &lt;200 µg/L or TSAT &lt;20%</td>
+      <td>IV iron (proactive strategy)</td>
+      <td>PIVOTAL <span class="pmid">PMID: 30462937</span></td>
+    </tr>
+    <tr>
+      <td><strong>Pregnancy</strong></td>
+      <td>Hb &lt;110 (1st) / &lt;105 (2nd/3rd) g/L</td>
+      <td>Oral → IV if no response</td>
+      <td>Pavord 2020 <span class="pmid">PMID: 31578717</span></td>
+    </tr>
+    <tr>
+      <td><strong>IBD (active)</strong></td>
+      <td>Ferritin &lt;100 µg/L or TSAT &lt;16%</td>
+      <td>IV iron preferred</td>
+      <td>ECCO Guidelines</td>
+    </tr>
+    <tr>
+      <td><strong>Pre-op anemia</strong></td>
+      <td>Hb &lt;13 (M) / &lt;12 (F) g/dL + ID</td>
+      <td>IV iron (FDI/FCM)</td>
+      <td>PREVENTT <span class="pmid">PMID: 32828615</span></td>
+    </tr>
+    <tr>
+      <td><strong>HMB</strong></td>
+      <td>Ferritin ≤50 ng/mL (ASH)</td>
+      <td>Iron + address HMB</td>
+      <td>ASH 2023 draft</td>
+    </tr>
+  </table>
+  <div class="key-msg mt-16">
+    <strong>One size does not fit all.</strong> The definition of iron deficiency, preferred route of iron, and treatment targets vary by clinical context. Know the disease-specific guidelines.
+  </div>
+</div>
+
+<!-- SECTION DIVIDER -->
+
+<div class="slide section-divider" data-slide="57">
+  <div>
+    <p style="color:var(--accent);text-transform:uppercase;letter-spacing:3px;font-size:0.85rem;">References</p>
+    <h1>Key References</h1>
+    <p style="color:var(--text-dim);">Evidence base with PubMed identifiers</p>
+  </div>
+</div>
+
+<!-- SLIDE 48: References 1 -->
+
+<div class="slide" data-slide="58">
+  <h2>References — Key Reviews &amp; Guidelines</h2>
+  <ol style="font-size:0.82rem;line-height:1.6;">
+    <li>Pasricha S-R, Tye-Din J, Muckenthaler MU, Swinkels DW. Iron deficiency. <em>Lancet</em> 2021;397:233–248. <span class="pmid">PMID: 33417888</span></li>
+    <li>Camaschella C. Iron deficiency. <em>Blood</em> 2019;133(1):30–39. <span class="pmid">PMID: 30401704</span></li>
+    <li>Camaschella C. Iron-deficiency anemia. <em>N Engl J Med</em> 2015;372:1832–1843. <span class="pmid">PMID: 25946282</span></li>
+    <li>Camaschella C, Nai A, Silvestri L. Iron metabolism and iron disorders revisited in the hepcidin era. <em>Haematologica</em> 2020;105:260–272. <span class="pmid">PMID: 32060150</span></li>
+    <li>Lopez A, Cacoub P, Macdougall IC, Peyrin-Biroulet L. Iron deficiency anaemia. <em>Lancet</em> 2016;387:907–916. <span class="pmid">PMID: 26314490</span></li>
+    <li>Snook J, Bhala N, Beales ILP, et al. BSG guidelines for the management of IDA in adults. <em>Gut</em> 2021;70:2030–2051. <span class="pmid">PMID: 34497146</span></li>
+    <li>Al-Naseem A, Sallam A, Choudhury S, Thachil J. Iron deficiency without anaemia: a diagnosis that matters. <em>Clin Med</em> 2021. <span class="pmid">PMID: 33762368</span></li>
+    <li>Young MF, Luo H, Suchdev PS. The challenge of defining the global burden of iron deficiency anaemia. <em>Lancet Haematol</em> 2023;10(9):e702–e704. <span class="pmid">PMID: 37536355</span></li>
+    <li>Chaparro CM, Suchdev PS. Anemia epidemiology, pathophysiology, and etiology in LMICs. <em>Ann N Y Acad Sci</em> 2019;1450(1):15–31. <span class="pmid">PMID: 31008520</span></li>
+    <li>Cacoub P, Choukroun G, Cohen-Solal A, et al. Iron deficiency screening is a key issue in chronic inflammatory diseases. <em>J Intern Med</em> 2022. <span class="pmid">PMID: 35466452</span></li>
+    <li>ASH Draft Recommendations for Diagnosis of Iron Deficiency, 2023. Available at: hematology.org.</li>
+    <li>WHO Guideline on Use of Ferritin Concentrations to Assess Iron Status, 2020.</li>
+  </ol>
+</div>
+
+<!-- SLIDE 49: References 2 -->
+
+<div class="slide" data-slide="59">
+  <h2>References — Landmark Trials &amp; Key Studies</h2>
+  <ol start="13" style="font-size:0.82rem;line-height:1.6;">
+    <li>Stoffel NU, Cercamondi CI, Brittenham G, et al. Iron absorption from oral iron on consecutive vs alternate days. <em>Lancet Haematol</em> 2017;4:e524–e533. <span class="pmid">PMID: 29032957</span></li>
+    <li>Stoffel NU, Zeder C, Brittenham GM, et al. Iron absorption greater with alternate-day dosing in IDA women. <em>Haematologica</em> 2020;105:1232. <span class="pmid">PMID: 31413088</span></li>
+    <li>Li N, Zhao G, Wu W, et al. Vitamin C for iron supplementation in adult IDA. <em>JAMA Netw Open</em> 2020;3:e2023644. <span class="pmid">PMID: 33136134</span></li>
+    <li>Anker SD, Comin-Colet J, Filippatos G, et al. FAIR-HF: FCM in HF with ID. <em>N Engl J Med</em> 2009;361:2436–2448. <span class="pmid">PMID: 19920055</span></li>
+    <li>Ponikowski P, van Veldhuisen DJ, Comin-Colet J, et al. CONFIRM-HF: FCM in HF with ID. <em>Eur Heart J</em> 2015;36:657–668. <span class="pmid">PMID: 25176939</span></li>
+    <li>Ponikowski P, Kirwan BA, Anker SD, et al. AFFIRM-AHF: FCM at discharge after acute HF. <em>Lancet</em> 2020;396:1895–1904. <span class="pmid">PMID: 33276917</span></li>
+    <li>Kalra PR, Cleland JGF, Petrie MC, et al. IRONMAN: IV ferric derisomaltose in HF and ID. <em>Lancet</em> 2022;400:2199–2209. <span class="pmid">PMID: 36347265</span></li>
+    <li>Macdougall IC, White C, Anker SD, et al. PIVOTAL: IV iron in hemodialysis. <em>N Engl J Med</em> 2019;380:2119–2130. <span class="pmid">PMID: 30462937</span></li>
+    <li>Pavord S, Daru J, Prasannan N, et al. UK guidelines on management of ID in pregnancy. <em>Br J Haematol</em> 2020;188:819–830. <span class="pmid">PMID: 31578717</span></li>
+    <li>Kulnigg S, Stoinov S, Simanenkov V, et al. FCM vs oral iron for IDA in IBD. <em>Am J Gastroenterol</em> 2008;103:1182–1192. <span class="pmid">PMID: 18194574</span></li>
+    <li>Wolf M, Rubin J, Achebe M, et al. Effects of FCM vs FDI on hypophosphatemia — 2 RCTs. <em>JAMA</em> 2020;323:432–443. <span class="pmid">PMID: 32016310</span></li>
+    <li>Zhao C, He W. Oral vs IV iron for IDA: a systematic review and meta-analysis. <em>Med Int</em> 2026.</li>
+    <li>Karakas M, et al. FAIR-HF2: sex-specific outcomes. <em>Eur J Heart Fail</em> 2025.</li>
+    <li>ESC 2023 Focused Update of the 2021 ESC Guidelines for HF. <em>Eur Heart J</em> 2023.</li>
+  </ol>
+</div>
+
+<!-- SLIDE 50: Thank You -->
+
+<div class="slide title-slide" data-slide="60">
+  <div style="max-width:800px;text-align:center;">
+    <h1 style="font-size:3rem;">Thank You</h1>
+    <div style="width:80px;height:3px;background:var(--accent);margin:24px auto;"></div>
+    <p style="font-size:1.2rem;color:var(--text-dim);margin-bottom:8px;">Questions &amp; Discussion</p>
+    <p class="text-muted small mt-24">All statistics in this presentation are referenced with PubMed identifiers (PMIDs).</p>
+    <p class="text-muted small">A complete evidence synthesis was performed using web search, Gemini AI-assisted literature consolidation, and manual verification against published sources.</p>
+    <p class="text-muted small mt-16">Presentation built June 2026 &bull; 50 slides &bull; 26 cited PMIDs</p>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<div id="nav">
+  <button onclick="prevSlide()">◀ Prev</button>
+  <span id="counter">1 / 60</span>
+  <button onclick="nextSlide()">Next ▶</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const counter = document.getElementById('counter');
+const total = slides.length;
+
+function showSlide(n) {
+  if (n < 0) n = total - 1;
+  if (n >= total) n = 0;
+  slides[current].classList.remove('active');
+  slides[n].classList.add('active');
+  current = n;
+  counter.textContent = (n + 1) + ' / ' + total;
+  // Scroll to top
+  slides[n].scrollTop = 0;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    nextSlide();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    prevSlide();
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    showSlide(0);
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    showSlide(total - 1);
+  }
+});
+
+// Touch swipe
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', (e) => {
+  const diff = e.changedTouches[0].screenX - touchStartX;
+  if (Math.abs(diff) > 50) {
+    if (diff < 0) nextSlide();
+    else prevSlide();
+  }
+});
+</script>
+
+</body>
+</html>
