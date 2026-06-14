@@ -45,12 +45,25 @@ Run before commit: `grep -rE '(g\.a000|sidts-|sk-[A-Za-z0-9]{20,}|/mnt/c/Users/)
 
 | Skill | Category | What it does |
 |-------|----------|--------------|
-| clinical-slide-deck | creative | Medical slide decks from PubMed |
-| gemini-image-generation | research | Imagen image gen via browser cookies |
-| screenshot-to-gemini | devops | Browser screenshots -> Gemini QA |
+| clinical-slide-deck | creative | Medical slide decks from PubMed with token-efficient pipeline |
+| gemini-image-generation | research | Imagen image gen via browser cookies (robust wrapper + token patterns) |
+| screenshot-to-gemini | devops | Browser screenshots -> Gemini QA with hallucination guard |
+
+## Reference files
+
+- `skills/clinical-slide-deck/references/template.css` — Complete CSS with static-nav pattern (never overlaps content). Copy the entire block into `<style>` tag.
+- `skills/clinical-slide-deck/references/template.html` — HTML skeleton with correct DOM structure. Copy and fill in slides.
+- `skills/clinical-slide-deck/scripts/slide-doctor.py` — HTML integrity checker (8 checks including file corruption detection)
 
 ## Cross-references between skills
 
-- `clinical-slide-deck` -> `gemini-image-generation` (for replacing broken SVGs)
+- `clinical-slide-deck` -> `gemini-image-generation` (replace SVGs, generate diagrams)
+- `clinical-slide-deck` -> `screenshot-to-gemini` (visual QA after building deck)
 - `screenshot-to-gemini` -> `gemini-cli` (external, for sending images to Gemini)
 - `gemini-image-generation` -> `gemini-cli` (external, for cookie auth)
+
+## Known tool limitations (documented in skills)
+
+- `gemini.py -f` silently drops files over ~30KB — use `-p "$(cat file.md)"` instead
+- `execute_code` write_file corrupts HTML (2-char strip) — use native `write_file`/`patch`
+- `browser_vision` fails on DeepSeek — route through gemini-fallback skill

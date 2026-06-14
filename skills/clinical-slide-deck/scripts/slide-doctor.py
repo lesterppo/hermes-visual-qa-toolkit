@@ -168,6 +168,47 @@ def main():
     html = path.read_text(encoding="utf-8")
     results = {"file": str(path), "checks": {}}
 
+    # --- File integrity check: detect 2-char-strip corruption ---
+    integrity_issues = []
+    lines = html.split('\n')
+    if not html.startswith('<!'):
+        integrity_issues.append("MISSING_DOCTYPE: file starts without '<!' — first 2 chars stripped")
+    # Check CSS selectors within <style> block only
+    style_start = html.find('<style>')
+    style_end = html.find('</style>')
+    if style_start >= 0 and style_end > style_start:
+        style_block = html[style_start:style_end]
+        style_lines = style_block.split('\n')
+        css_corrupt = []
+        for i, line in enumerate(style_lines):
+            stripped = line.strip()
+            # Valid CSS selectors that should NOT start with a bare letter
+            # These should start with . # * @ or be empty/comment
+            if stripped and stripped[0].isalpha() and not stripped.startswith('/*'):
+                # Check if it looks like a corrupted selector
+                if any(stripped.startswith(p) for p in [
+                    'slide', 'title-slide', 'section', 'card-accent', 'card-blue',
+                    'card-teal', 'card-green', 'card-red', 'stat-box', 'flex-row',
+                    'flex-1', 'key-msg', 'slide-num', 'subtitle', 'agenda-grid',
+                    'section-title', 'section-num', 'bar-container', 'bar-label',
+                    'bar-track', 'bar-fill', 'timeline-item', 'timeline-year',
+                    'good', 'bad', 'warn', 'counter'
+                ]):
+                    css_corrupt.append(f"line {i+1}: '{stripped[:40]}'")
+        if css_corrupt:
+            integrity_issues.append(f"CSS_CORRUPTION: {len(css_corrupt)} selectors missing '.'/'#' — 2-char strip in <style> block")
+            integrity_issues.extend(css_corrupt[:5])
+    # Check for stray pipe characters (read_file format artifact)
+    pipe_lines = sum(1 for line in lines if line.strip() == '|')
+    if pipe_lines > 3:
+        integrity_issues.append(f"STRAY_PIPES: {pipe_lines} lines are bare '|' — read_file artifact")
+    if integrity_issues:
+        results["checks"]["file_integrity"] = {"ok": False, "issues": integrity_issues}
+    else:
+        results["checks"]["file_integrity"] = {"ok": True, "issues": []}
+
+    
+
     # Check 1: Overall div balance
     opens, closes, delta = check_div_balance(html)
     results["checks"]["div_balance"] = {"opens": opens, "closes": closes, "delta": delta, "ok": delta == 0}
@@ -208,6 +249,7 @@ def main():
     if args.json or args.agent:
         out = {"ok": all_ok, "file": str(path), "issues": []}
         if not all_ok:
+            d = results["checks"]
             for check_name, check_data in d.items():
                 if isinstance(check_data, dict) and not check_data.get("ok", True):
                     out["issues"].append({check_name: check_data.get("details", "failed")})
@@ -227,6 +269,12 @@ def main():
         # Human-readable output
         d = results["checks"]
         print(f"slide-doctor: {path.name}")
+        # File integrity check first
+        fi = d.get('file_integrity', {})
+        if not fi.get('ok', True):
+            print(f"  FILE INTEGRITY: {len(fi.get('issues',[]))} corruption(s) detected!")
+            for issue in fi.get('issues', []):
+                print(f"    {issue}")
         print(f"  div balance:  {d['div_balance']['opens']}/{d['div_balance']['closes']} "
               f"(delta={d['div_balance']['delta']}) {'✓' if d['div_balance']['ok'] else '✗'}")
         for tag, info in d['tag_balance'].items():

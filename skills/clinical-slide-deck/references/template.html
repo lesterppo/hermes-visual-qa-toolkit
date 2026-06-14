@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TITLE_HERE</title>
+<!-- REQUIRED: Google Fonts for Crimson Text + DM Sans -->
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- REQUIRED: Copy ALL of references/template.css into the <style> tag below -->
+<style>
+/* PASTE references/template.css HERE — the complete block, unmodified */
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     DO NOT change this DOM structure. The CSS depends on:
+     - #slides (calc height, overflow hidden)
+     - .slide elements INSIDE #slides
+     - #nav OUTSIDE #slides (static bar, never overlaps)
+     - <script> at the end (carousel logic)
+     ============================================================ -->
+
+<div id="slides">
+
+  <!-- SLIDE 1: Title — always first, always has class="active" -->
+  <div class="slide title-slide active" data-slide="1">
+    <h1>TITLE_HERE</h1>
+    <p class="subtitle">SUBTITLE_HERE</p>
+    <div style="margin-top:32px;">
+      <p style="font-size:1.1rem; color:var(--text-dim);">PRESENTER_INFO</p>
+    </div>
+    <p class="slide-num">1</p>
+  </div>
+
+  <!-- SLIDE 2: Agenda -->
+  <div class="slide" data-slide="2">
+    <h2>Agenda</h2>
+    <div class="agenda-grid">
+      <p>1. Topic A</p><p>4. Topic D</p>
+      <p>2. Topic B</p><p>5. Topic E</p>
+      <p>3. Topic C</p><p>6. Topic F</p>
+    </div>
+    <p class="slide-num">2</p>
+  </div>
+
+  <!-- SECTION DIVIDER: between major sections -->
+  <div class="slide section-divider" data-slide="3">
+    <p class="section-num">SECTION 1</p>
+    <p class="section-title">SECTION_TITLE_HERE</p>
+    <p style="color:var(--text-dim); font-size:1.1rem;">SECTION_SUBTITLE</p>
+    <p class="slide-num">3</p>
+  </div>
+
+  <!-- Content slide with stat boxes -->
+  <div class="slide" data-slide="4">
+    <h2>SLIDE_TITLE_HERE</h2>
+    <div class="flex-row">
+      <div class="stat-box"><div class="stat-num">99%</div><div class="stat-label">METRIC_LABEL</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--red)">40%</div><div class="stat-label">METRIC_LABEL</div></div>
+    </div>
+    <div class="card card-red" style="margin-top:20px;">
+      <p><strong>Key Point:</strong> CARD_CONTENT_HERE</p>
+    </div>
+    <p class="slide-num">4</p>
+  </div>
+
+  <!-- Content slide with flex cards -->
+  <div class="slide" data-slide="5">
+    <h2>SLIDE_TITLE_HERE</h2>
+    <div class="flex-row">
+      <div class="card flex-1 card-blue">
+        <h3>CARD_TITLE</h3>
+        <p>CARD_CONTENT</p>
+      </div>
+      <div class="card flex-1 card-green">
+        <h3>CARD_TITLE</h3>
+        <p>CARD_CONTENT</p>
+      </div>
+    </div>
+    <div class="key-msg" style="margin-top:12px;">
+      <p><strong>KEY_MESSAGE_HERE</strong></p>
+    </div>
+    <p class="slide-num">5</p>
+  </div>
+
+  <!-- Evidence table slide -->
+  <div class="slide" data-slide="6">
+    <h2>SLIDE_TITLE_HERE</h2>
+    <p class="ref">REFERENCE_CITATION_HERE. PMID: XXXXXXXX.</p>
+    <table>
+      <tr><th>COL1</th><th>COL2</th><th>COL3</th></tr>
+      <tr><td>DATA</td><td>DATA</td><td><span class="good">DATA</span></td></tr>
+    </table>
+    <p class="slide-num">6</p>
+  </div>
+
+  <!-- Closing slide -->
+  <div class="slide title-slide" data-slide="7">
+    <h1>Thank You</h1>
+    <p style="font-size:1.2rem; color:var(--text-dim); margin-top:16px;">CLOSING_MESSAGE</p>
+    <div style="margin-top:32px;">
+      <p style="color:var(--gold); font-size:1.1rem;">Questions &amp; Discussion</p>
+    </div>
+    <p class="slide-num">7</p>
+  </div>
+
+</div><!-- END #slides — DO NOT put slides after this -->
+
+<!-- ============================================================
+     Static navigation bar — outside #slides, NEVER overlays content
+     The CSS sets #slides height to calc(100vh - 44px) to leave room
+     ============================================================ -->
+<div id="nav">
+  <button onclick="prevSlide()">&#x25C0; Prev</button>
+  <span id="counter">1 / 7</span>
+  <button onclick="nextSlide()">Next &#x25B6;</button>
+</div>
+
+<!-- ============================================================
+     Carousel JavaScript — DO NOT modify unless you understand
+     the showSlide() state machine. The counter, keyboard events,
+     and active class toggling all depend on this logic.
+     ============================================================ -->
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const counter = document.getElementById('counter');
+const total = slides.length;
+
+function showSlide(n) {
+  slides[current].classList.remove('active');
+  current = ((n % total) + total) % total;
+  slides[current].classList.add('active');
+  slides[current].scrollTop = 0;
+  counter.textContent = (current + 1) + ' / ' + total;
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); prevSlide(); }
+  if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+  if (e.key === 'End')  { e.preventDefault(); showSlide(total - 1); }
+});
+</script>
+</body>
+</html>

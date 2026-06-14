@@ -25,18 +25,37 @@ triggers:
 | `screenshots.js` | Capture PNGs with per-slide diagnostics + `--diff` pixel comparison + `--agent` compact output. Self-tests chromium on startup with clear install instructions if missing. |
 | `gemini-batch-review.sh` | Chunked Gemini review (batches of 3) with conversation continuation + automatic hallucination guard (cross-verifies QA responses against "describe what you see"). |
 
-## Agent Quick Path
+## Agent Quick Path (token-efficient)
 
 ```
-TRIGGER: user reports blank slides, rendering defects, or wants visual QA
-1. node scripts/screenshots.js --path deck.html --slides 1-5,35-40,66
-   → per-slide title, opacity, dimensions, status (BLANK/ZERO-SIZE/ok)
-   → outputs PNGs + screenshots.json with full diagnostics
-2. If any BLANK: check that slide's div balance + tag-type in HTML
-3. gemini-gemini.sh -i slide_*.png -m pro "QA review"
-4. Cross-verify: "describe exactly what you see" (Gemini hallucination check)
-5. Add --agent for compact JSON: {"ok":true,"total":66,"blanks":[]}
+TRIGGER: user wants visual verification of an HTML slide deck
+
+// Step 1 — ALWAYS run this first (0 LLM tokens, 3-15 seconds)
+1. node scripts/screenshots.js --path deck.html --slides 1,15,30,N --output /tmp/qa/ --agent
+   → {"ok":true,"total":52,"captured":4,"blanks":[],"diffs":[]}
+   → If "ok":true and "blanks":[] → DECK IS VERIFIED. Skip to structural fixes if any.
+   → If "blanks":[37,38] → those slides have opacity/zero-size issues. Check div balance.
+
+// Step 2 — structural check if blanks found (0 LLM tokens)
+2. slide-doctor.py deck.html → check div balance, tag-type balance on blank slides
+   Fix issues with patch(), re-run screenshots.js --agent
+
+// Step 3 — Gemini visual QA ONLY if needed (~18K tokens per call, use sparingly)
+3. IF user reports visual defects that --agent doesn't catch (layout, color, overlap)
+   OR IF images were added and need visual verification
+   THEN: gemini-gemini.sh -i /tmp/qa/slide_*.png -m pro "QA review" -o /tmp/visual-qa.md
+   Do NOT run this speculatively when --agent says {"ok":true}
 ```
+
+**Token cost by verification method:**
+| Method | Tokens | Time | Catches |
+|--------|--------|------|---------|
+| `screenshots.js --agent` | 0 | 3s | Blanks, zero-size, opacity cascade |
+| `slide-doctor.py` | 0 | <1s | Div balance, tag-type, orphans, integrity |
+| Gemini visual QA (6 imgs) | ~18K | 60-90s | Layout, color, typography, overflow |
+| Gemini cross-verify | ~18K | 60-90s | Hallucination check — skip by default |
+
+**Escalation rule:** If `screenshots.js --agent` returns `{"ok":true}` AND `slide-doctor.py` is all clean, the deck is structurally verified. Gemini visual QA adds ~18K tokens — reserve for user-requested reviews or post-image-embedding verification.
 
 ## Prerequisites
 
@@ -136,15 +155,16 @@ const { chromium } = require('playwright');
 
 ## Workflow
 
-### Step 1: Screenshot the deck
+### Step 1: Screenshot with --agent (zero tokens, always first)
 
 ```bash
-cd /tmp && node screenshots.js
-# Output: /tmp/slide_01.png, /tmp/slide_02.png, ...
-# Logs: total slides, per-slide title + opacity + dimensions
+node scripts/screenshots.js --path deck.html --slides 1,15,30,52 --output /tmp/qa/ --agent
+# → {"ok":true,"total":52,"captured":4,"blanks":[],"diffs":[]}
 ```
 
-### Step 2: Send to Gemini for visual review
+If output is clean (`"ok":true`, `"blanks":[]`), the deck renders correctly. **Stop here.** Only continue if blanks found or user requests visual review.
+
+### Step 2: Gemini visual QA (escalation only, ~18K tokens)
 
 ```bash
 GEMINI=~/.hermes/scripts/gemini/gemini-gemini.sh
@@ -196,4 +216,5 @@ Slide 12: ... | 1450x720  <- horizontal overflow
 3. **Absolute paths** -- Use `file://~/deck.html`. Relative paths fail headless.
 4. **Chromium install timeout** -- First install: `timeout=300`. Subsequent: instant.
 5. **Gemini hallucination** -- QA mode may describe SVG fixes for images that don't exist. Cross-verify.
-6. **WSL headless only** -- `--no-sandbox` required. No display server available.
+6. **Nav counter stuck at "1 / N" is a false positive.** The screenshots.js script activates slides by directly toggling the CSS `active` class — it does NOT call the deck's `showSlide()` JavaScript function. The nav counter only updates when `showSlide()` runs (triggered by keyboard or button clicks in a real browser). In static screenshots, the counter always shows "1 / N". Gemini visual QA will flag this as a "broken counter" — ignore it. Verify navigation works by checking that per-slide `data-slide` attributes are sequential and the JS `showSlide()` function exists in the source.
+7. **Navigation counter frozen in screenshots (visual artifact, NOT a real bug).** The `screenshots.js` script activates slides by directly toggling CSS classes (`.classList.add('active')`) rather than calling the deck's `showSlide(n)` function. Because the JS variable `current` is never updated, the nav counter `<span id="counter">` shows "1 / N" for every slide. The hardcoded `<p class="slide-num">` in the bottom-right corner updates correctly. **Do not report this as a rendering defect — it is a screenshot artifact.** In real browser use, arrow keys and prev/next buttons call `showSlide()` which updates the counter correctly. Verify by opening the HTML file directly in a browser and clicking through slides.

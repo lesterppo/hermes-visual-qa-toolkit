@@ -124,6 +124,8 @@ Replace the SVG block entirely — not just the `<svg>` opening tag. Remove the 
 
 ## Account Switching
 
+See `references/gemini-auth-switching.md` in the screenshot-to-gemini skill for the complete WSL account switching workflow, including Firefox profile scanning, TS=None handling, and rate limit recovery.
+
 The gemini_webapi uses browser cookies (`GEMINI_SID`, `GEMINI_TS`). To switch accounts:
 
 1. Log into gemini.google.com with the desired account in Windows Firefox
@@ -177,7 +179,9 @@ $PY $GEMINI --json -p "Generate an image: ..." -o /tmp/result.json
 
 3. **Image CDN requires cookie auth** — Direct `curl` without cookies returns an HTML login page (2.5KB), not the image. Always pass `-b "__Secure-1PSID=...; __Secure-1PSIDTS=..."`.
 
-4. **Account capability vs rate limit** — When Gemini returns "I can try to find an image... but can't create it right now. It's possible you're signed out or image creation isn't available in your location" OR "Are you signed in? I can search for images, but can't seem to create any for you right now," this means the Google account **lacks Imagen capability** — NOT a rate limit or auth issue. The same account handles text chat fine. Only some Google accounts have image generation (may be region-gated or subscription-gated). The ping check verifies auth but NOT image capability — a successful ping does not guarantee image gen will work. If one account returns this consistently after 2 attempts, another account MUST be used. In the calprotectin session: 2 attempts with account #2 (cyc236ha@gmail.com) returned this; switching to account #3 (also cyc236ha but with valid TS token) succeeded immediately with the same prompt.
+4. **Account capability vs rate limit** — When Gemini returns "I can try to find an image... but can't create it right now" this means the account **lacks Imagen capability** — NOT a rate limit or auth issue. The ping check verifies auth but NOT image capability. If one account fails consistently after 2 attempts, switch accounts.
+
+   **Confirmed working:** A Google account without TS cookie (GEMINI_TS="") via Windows Firefox. 4/4 images generated successfully in MDR-TB deck session using direct gemini.py workflow.
 
 5. **Image reference paths** — Save images in the same directory as the HTML and use relative paths (`src="image.png"` not absolute). This keeps the deck portable.
 
@@ -194,3 +198,31 @@ $PY $GEMINI --json -p "Generate an image: ..." -o /tmp/result.json
 11. **gemini-gemini.sh wrapper crashes with null TS** — When `gemini-auth.py` extracts cookies and `GEMINI_TS` is `None` (some Google accounts have no TS cookie), the `gemini-gemini.sh` wrapper calls `gemini-auth.py` internally which crashes with `TypeError: expected str, bytes or os.PathLike object, not NoneType`. **Workaround:** Use `gemini.py` directly: `GEMINI_SID=... GEMINI_TS="" gemini.py -p "$(cat prompt.md)" -m pro -o out.md`. Skip the wrapper entirely for accounts with null TS. The `-f` flag on gemini.py attaches a document; the prompt text itself goes via `-p` or positional args.
 
 12. **Passing prompt text from a file to gemini.py** — The `-f` flag on `gemini.py` attaches a file as a **document** (like PDF, CSV, context material), NOT as prompt text. Using `-f prompt.md` alone causes "Prompt cannot be empty." To pass a file's content as the prompt text, use shell substitution: `-p "$(cat /path/to/prompt.md)"`. The wrapper `gemini-gemini.sh` handles `-f` differently — it can accept `-f file` as context alongside a positional prompt string. **Pattern for pre-build synthesis:** `$PY $GEMINI -p "$(cat /tmp/synthesis-prompt.md)" -m pro --thinking extended -o /tmp/synthesis.md`. **Pattern for deck review with file context:** `$PY $GEMINI -f deck.html -p "review this deck..." -m pro --thinking extended -o /tmp/review.md`.
+
+13. **`-f` silently drops large files — use `-p "$(cat ...)"` for multi-file or >30KB input** — The `-f` flag has a per-file size limit (~30KB observed: 65KB clinical-slide-deck SKILL.md was silently dropped while 4KB and 7KB files were attached). When sending multiple files or large files for cross-check/review, concatenate them into the prompt text: `-p "$(cat file1.md file2.md)\n\n---\n\nYOUR INSTRUCTION HERE"`. This bypasses the attachment limit entirely and guarantees all content reaches Gemini. **Pattern for multi-file cross-check:** `$PY $GEMINI -p "$(cat skill1.md skill2.md skill3.md)\n\n---\n\nCROSS-CHECK these files for consistency...\" -m pro --thinking extended -o /tmp/crosscheck.md`. The downside is that prompt text cannot contain binary data (images, PDFs) — for those, `-f` remains the only option but keep each file under ~30KB.
+
+## Token Efficiency
+
+This workflow is **token-expensive** — each image requires 3 tool calls (generate, parse, download) plus 1 embed call. For a deck needing 4 images, that's 16 tool calls (~8K input tokens each turn × 16 ≈ 128K tokens). Specific patterns that save tokens:
+
+1. **Batch generates in parallel** — `terminal(background=true, notify_on_complete=true)` for each image. All complete in parallel (~30s) vs sequentially (~120s). Token cost is identical but wall-clock time drops 4×.
+
+2. **Single-pass embed** — Use one `execute_code` block to embed all images at once. Multiple separate `patch()` calls each cost a full context round-trip (~8K tokens). One `execute_code` pass embeds all N images in one turn.
+
+3. **Skip the wrapper** — `gemini-gen-image.sh` fails ~60% of the time. A failed wrapper attempt wastes: 1 terminal call + 1 read_file to check output + 1 retry = ~24K tokens per failure. Direct `gemini.py --json` succeeded 4/4 in MDR-TB session (0% failure rate).
+
+4. **Pre-flight ping is mandatory** — A wasted generation prompt on expired auth costs tokens with zero output. `gemini-ping.sh --quiet` costs ~1K tokens. A failed generation costs ~8K tokens. Always ping first.
+
+5. **Image size is fixed** — Gemini Imagen outputs are always 512×279 PNG (~30-45KB). Don't ask for larger sizes — it's a hard constraint of the free tier. Accept the size and use `max-width:90%` CSS to scale in-browser.
+
+6. **Cookie extraction is fragile** — `gemini-auth.py` uses a hardcoded Firefox profile path that goes stale across sessions. When it fails (Python traceback + 1 tool call), manually set `GEMINI_SID`/`GEMINI_TS` env vars instead. In the WSL environment, Chrome cookies (`browser_cookie3.chrome()`) are more reliable than Firefox.
+
+## Suggested Native Tool Integration
+
+A single `gemini_generate_image(prompt, output_path)` core tool would collapse the 3-step pipeline into 1 call, saving ~16K tokens per image (parse + download calls eliminated). The tool would:
+1. Accept a text prompt + output filename
+2. Handle auth internally (env vars or browser cookies)
+3. Generate via Imagen, download with cookie auth, verify `file` output
+4. Return `{"ok": true, "path": "/home/peter/diagram.png", "size_bytes": 32000}`
+
+This would turn 4 tool calls per image into 1 — a 4× token efficiency gain for the most common image generation pattern in slide deck workflows.

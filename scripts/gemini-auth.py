@@ -8,16 +8,43 @@ Usage:
   python3 gemini-auth.py --set-env -- testcmd  # set and run command
 """
 
-import sqlite3, shutil, os, sys, subprocess
+import sqlite3, shutil, os, sys, subprocess, glob
 
-FIREFOX_PROFILE = "/mnt/c/Users/Peter/AppData/Roaming/Mozilla/Firefox/Profiles/jzkf87zc.default-1467441358099"
-COOKIES_DB = os.path.join(FIREFOX_PROFILE, "cookies.sqlite")
+def find_firefox_profile():
+    """Auto-discover Firefox profile directory (Windows/WSL compatible)."""
+    # Try Windows Firefox profiles
+    for base in [
+        os.path.expanduser("~/AppData/Roaming/Mozilla/Firefox/Profiles"),
+        "/mnt/c/Users/*/AppData/Roaming/Mozilla/Firefox/Profiles",
+    ]:
+        try:
+            for profile_dir in glob.glob(os.path.join(base, "*.default*")):
+                cookies_db = os.path.join(profile_dir, "cookies.sqlite")
+                if os.path.exists(cookies_db):
+                    return profile_dir
+        except Exception:
+            continue
+    # Fallback: try Linux Firefox
+    for base in [os.path.expanduser("~/.mozilla/firefox")]:
+        try:
+            for profile_dir in glob.glob(os.path.join(base, "*.default*")):
+                cookies_db = os.path.join(profile_dir, "cookies.sqlite")
+                if os.path.exists(cookies_db):
+                    return profile_dir
+        except Exception:
+            continue
+    return None
 
 
 def extract_cookies():
+    profile = find_firefox_profile()
+    if not profile:
+        sys.stderr.write("[gemini-auth] No Firefox profile found. Login to gemini.google.com in Firefox first.\n")
+        return None, None
+    cookies_db = os.path.join(profile, "cookies.sqlite")
     tmp = "/tmp/firefox_gemini_cookies.sqlite"
     try:
-        shutil.copy2(COOKIES_DB, tmp)
+        shutil.copy2(cookies_db, tmp)
     except FileNotFoundError:
         sys.stderr.write("[gemini-auth] Firefox cookies.sqlite not found\n")
         return None, None

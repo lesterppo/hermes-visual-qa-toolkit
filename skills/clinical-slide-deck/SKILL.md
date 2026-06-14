@@ -38,21 +38,43 @@ triggers:
 
 # Clinical Slide Deck Builder
 
-## Agent Quick Path
+## Agent Quick Path (token-efficient)
 
 ```
 TRIGGER: user asks for medical slide deck
-1. If well-covered topic: web_search (5-6 queries) → Gemini pre-build synthesis (single pro prompt)
-   If niche topic: med-search-cli → PubMed (full pipeline, Phases 1-2d)
-2. Build HTML: frontend-design dark theme (#0f1623, #c9a84c, Crimson Text + DM Sans)
-3. slide-doctor.py deck.html → 7 checks → fix issues → re-run
-4. screenshots.js --path deck.html → key slides → verify opacity/dimensions
-5. gemini-gemini.sh -i slide_*.png → visual QA → fix → re-screenshot
-6. gemini-gemini.sh -f deck.html → content accuracy review → apply fixes
-7. If deck has abstract/mechanistic concepts: gemini-ping.sh → image audit (full deck) →
-   batch generate with gemini-gen-image.sh (background parallel) → embed after h2 →
-   slide-doctor.py + re-screenshot → Gemini visual QA on image slides
+1. If well-covered topic: web_search (5-6 queries parallel) → Gemini pre-build synthesis
+   If niche topic: med-search-cli → PubMed
+2. Build HTML: Start from references/template.html (correct DOM structure with static nav).
+   Replace TITLE_HERE / CONTENT_HERE placeholders. CSS: copy entire references/template.css
+   into the <style> tag. Both files guarantee no nav overlap, correct fonts, and proper sizing.
+3. slide-doctor.py deck.html → integrity check → catch corruption BEFORE editing
+4. screenshots.js --path deck.html --slides 1,15,30,last --agent
+   → {"ok":true,"blanks":[]} is sufficient. Gemini visual QA only if issues found.
+5. patch() for all text/structural fixes — NEVER use execute_code write_file for file edits
+   patch() works without reading file first, saving ~18K tokens per edit
+6. Gemini content review: single pro call with -f deck.html → apply fixes via patch()
+7. Image needs: gemini-gen-image.sh (one-command wrapper, handles auth+download+verify)
+   Generate all images in parallel background → one execute_code pass to embed all at once
 ```
+
+**Token costs per step (approximate):**
+| Step | Tokens | Notes |
+|------|--------|-------|
+| Web search ×5 | ~3K | Parallel, one turn |
+| Gemini synthesis | ~4K | Consolidates all search data |
+| write_file (80KB) | ~10K | One turn, no re-reads |
+| slide-doctor + screenshots | ~8K | Verification, zero Gemini tokens |
+| patch() per edit | ~0.5K | No file read needed first |
+| Gemini content review | ~20K | 82KB HTML attached |
+| Gemini visual QA (each) | ~18K | 6 screenshots uploaded — use sparingly |
+| Image generation ×4 | ~5K | Background parallel, one embed pass |
+
+**Never do these (they waste tokens):**
+- `read_file` before `patch()` — patch finds the text internally. Save ~18K.
+- Gemini visual QA when `screenshots.js --agent` says `{"ok":true}` — it's already verified.
+- `execute_code` for file editing — write_file inside execute_code strips 2 chars/line. Use native write_file/patch.
+- Multiple Gemini visual QA rounds — one round catches 90% of issues. Each extra round costs ~18K.
+- `position:fixed` nav — it ALWAYS overlaps on dense slides. Use template.css static pattern.
 
 ## Dependencies (auto-load chain)
 
@@ -682,6 +704,8 @@ rsvg-convert forest_rebleeding.svg -o forest_rebleeding.png
 13. **Gemini image audit prevents wasted generations.** Running a full-deck audit before generating any images ensures you only generate images for slides that actually need them. The iron deficiency deck audit identified 31 candidates; only 7 HIGH-priority GENERATED types were implemented. Without the audit, images would have been generated ad-hoc for the wrong slides. Audit costs one Gemini pro prompt; wasted generations cost tokens + rate limits + embedding time.
 14. **Gemini synthesis: use -p not -f for prompt text.** The -f flag on gemini.py attaches a file as a document, not as prompt text — using it alone produces "Prompt cannot be empty." Pass prompt content from a file with shell substitution: gemini.py -p "$(cat /tmp/prompt.md)" -m pro --thinking extended -o /tmp/synthesis.md. This works even with accounts that have null GEMINI_TS (which crash the gemini-gemini.sh wrapper).
 
+15. **⚠ NEVER use write_file inside execute_code for HTML files.** `execute_code`'s `write_file` strips 2 characters from the start of every line: `<!DOCTYPE html>` → `DOCTYPE html>`, `.card` → `card`, `<style>` → `tyle>`, etc. The corruption is silent — no error, but all CSS and HTML break. Additionally, `read_file` line-number `|` separators become embedded as literal characters in the written output. **Use `patch` for targeted edits or the main `write_file` tool for full rewrites instead.** Recovery from corruption: match corrupted lines as `old_string` in `patch` calls, replacing with correct versions. Always verify with `slide-doctor.py` after any file write from `execute_code`. This was discovered in the MDR-TB deck session — the full CSS block had to be replaced in one `patch` after the 2-char corruption was found.
+
 ## Pitfall: SVG Arrowhead Markers Must Precede References
 
 SVG `<marker>` elements in `<defs>` must be defined BEFORE any element that references them via `url(#id)`. 
@@ -774,19 +798,50 @@ When building step-by-step algorithm slides with vertical arrow flow (Step 1 →
 
 **Verify:** After compacting, re-screenshot the slide and confirm the bottom-most element is visible to Gemini before continuing. The iron deficiency deck required 3 iterations to fit a 7-element vertical flow into 720px.
 
-## Pitfall: Fixed Navigation Bar Overlaps Bottom Content
+## Pitfall: Fixed Navigation Bar Overlaps Bottom Content — Use Static Nav, Not Padding
 
-The `#nav` bar (Prev / counter / Next) is `position: fixed; bottom: 20px` — it sits on top of slide content at the bottom of the viewport. On dense slides (embedded images, tables, take-home message cards), the nav bar obscures the last visible content.
+The `#nav` bar with `position: fixed` sits on top of slide content. Increasing `.slide` bottom padding
+does NOT reliably fix this — because `overflow-y: auto` lets content scroll PAST the padding area
+into the nav zone. On dense slides with tables, images, or key-message boxes, Gemini QA will
+consistently report overlap regardless of padding value (tested: 72px, 96px, 130px, 160px all failed).
 
-**Symptoms:** Gemini visual QA reports "navigation overlay is sitting directly on top of the diagram" or "the last line of text is cut off by the navigation bar." Affected slides in PIVKA-II deck: slide 6 (prothrombin diagram obscured) and slide 37 (last take-home message clipped).
+**Symptoms:** Gemini visual QA reports "navigation bar is sitting directly on top of the content"
+on content-heavy slides. The overlap is particularly bad on table slides, timeline slides, and
+slides with multiple key-message boxes. Any font-size increase makes it worse.
 
-**Fix:** Increase `.slide` bottom padding to create clearance for the nav:
+**Correct fix — restructure nav as a STATIC bar below the slides container:**
+
 ```css
-.slide {
-  padding: 48px 64px 72px 64px;  /* was 48px 64px — extra 24px bottom padding */
+/* Replace fixed positioning with static bar */
+#slides { height: calc(100vh - 44px); overflow: hidden; }  /* leave 44px for nav */
+.slide { padding: 48px 64px 24px 64px; }  /* no special bottom padding needed */
+#nav {
+  display: flex; align-items: center; justify-content: center;
+  gap: 18px; background: var(--bg-slide); padding: 6px 20px; height: 44px;
+  border-top: 1px solid var(--gold-dim);
 }
 ```
-This pushes the last content line above the fixed nav bar. The 72px bottom padding provides ~24px of clearance between content and the 48px nav bar region. Verify with re-screenshot after applying.
+
+In the HTML, place `</div>` (close #slides) BEFORE `<div id="nav">`, not after:
+```html
+</div>  <!-- closes last slide -->
+</div>  <!-- closes #slides -->
+
+<div id="nav">
+  <button onclick="prevSlide()">◀ Prev</button>
+  <span id="counter">1 / N</span>
+  <button onclick="nextSlide()">Next ▶</button>
+</div>
+```
+
+This guarantees zero overlap — the nav is a dedicated bar below the slide area, never intersecting
+the content viewport. No padding hacks needed. Verified on a 52-slide MDR-TB deck with enlarged fonts.
+
+**For timeline slides specifically**, also compact the timeline spacing:
+```css
+.timeline-item { margin-bottom: 12px; }  /* was 20px */
+```
+The default 20px gap between 6 timeline items wastes ~120px vertically. At 12px, all items fit in the viewport. Verify with re-screenshot after applying both changes.
 
 ## Pitfall: slide-doctor Per-Slide False Positive on Final Slide
 
@@ -818,19 +873,50 @@ When building step-by-step algorithm slides with vertical arrow flow (Step 1 →
 
 **Verify:** After compacting, re-screenshot the slide and confirm the bottom-most element is visible to Gemini before continuing. The iron deficiency deck required 3 iterations to fit a 7-element vertical flow into 720px.
 
-## Pitfall: Fixed Navigation Bar Overlaps Bottom Content
+## Pitfall: Fixed Navigation Bar Overlaps Bottom Content — Use Static Nav, Not Padding
 
-The `#nav` bar (Prev / counter / Next) is `position: fixed; bottom: 20px` — it sits on top of slide content at the bottom of the viewport. On dense slides (embedded images, tables, take-home message cards), the nav bar obscures the last visible content.
+The `#nav` bar with `position: fixed` sits on top of slide content. Increasing `.slide` bottom padding
+does NOT reliably fix this — because `overflow-y: auto` lets content scroll PAST the padding area
+into the nav zone. On dense slides with tables, images, or key-message boxes, Gemini QA will
+consistently report overlap regardless of padding value (tested: 72px, 96px, 130px, 160px all failed).
 
-**Symptoms:** Gemini visual QA reports "navigation overlay is sitting directly on top of the diagram" or "the last line of text is cut off by the navigation bar." Affected slides in PIVKA-II deck: slide 6 (prothrombin diagram obscured) and slide 37 (last take-home message clipped).
+**Symptoms:** Gemini visual QA reports "navigation bar is sitting directly on top of the content"
+on content-heavy slides. The overlap is particularly bad on table slides, timeline slides, and
+slides with multiple key-message boxes. Any font-size increase makes it worse.
 
-**Fix:** Increase `.slide` bottom padding to create clearance for the nav:
+**Correct fix — restructure nav as a STATIC bar below the slides container:**
+
 ```css
-.slide {
-  padding: 48px 64px 72px 64px;  /* was 48px 64px — extra 24px bottom padding */
+/* Replace fixed positioning with static bar */
+#slides { height: calc(100vh - 44px); overflow: hidden; }  /* leave 44px for nav */
+.slide { padding: 48px 64px 24px 64px; }  /* no special bottom padding needed */
+#nav {
+  display: flex; align-items: center; justify-content: center;
+  gap: 18px; background: var(--bg-slide); padding: 6px 20px; height: 44px;
+  border-top: 1px solid var(--gold-dim);
 }
 ```
-This pushes the last content line above the fixed nav bar. The 72px bottom padding provides ~24px of clearance between content and the 48px nav bar region. Verify with re-screenshot after applying.
+
+In the HTML, place `</div>` (close #slides) BEFORE `<div id="nav">`, not after:
+```html
+</div>  <!-- closes last slide -->
+</div>  <!-- closes #slides -->
+
+<div id="nav">
+  <button onclick="prevSlide()">◀ Prev</button>
+  <span id="counter">1 / N</span>
+  <button onclick="nextSlide()">Next ▶</button>
+</div>
+```
+
+This guarantees zero overlap — the nav is a dedicated bar below the slide area, never intersecting
+the content viewport. No padding hacks needed. Verified on a 52-slide MDR-TB deck with enlarged fonts.
+
+**For timeline slides specifically**, also compact the timeline spacing:
+```css
+.timeline-item { margin-bottom: 12px; }  /* was 20px */
+```
+The default 20px gap between 6 timeline items wastes ~120px vertically. At 12px, all items fit in the viewport. Verify with re-screenshot after applying both changes.
 
 ## Pitfall: slide-doctor Per-Slide False Positive on Final Slide
 
@@ -865,7 +951,104 @@ After the initial QA review, run a **two-source improvement pass** for maximum c
 
 This two-source pattern caught 15 actionable improvements in the iron deficiency deck that a single-source review would have missed.
 
-## Pitfall: `-f` flag means different things in different CLIs
+## NEW PITFALL: SVG Bar Chart Heights Must Be Calculated, Not Eyeballed
+
+Inline SVG bar charts render whatever pixel values you give them — they do NOT auto-scale to percentages.
+If you eyeball `y` and `height` values, the bars will misrepresent the data even though the percentage
+labels look correct.
+
+**Correct approach — always calculate:**
+
+```
+Y-axis range in pixels: top = 100 (100%), bottom = 430 (0%), range = 330px
+For a value of V%:  height = (V/100) * 330,  y = 430 - height
+```
+
+Example: MDR-TB deck slide 23 had all 5 bar heights wrong (52% rendered as 100%, 91% as 82%, etc.)
+because the values were typed by eye. The fix recalculated every bar using the formula above.
+
+**Verification:** For every bar in the SVG, verify `height / 330 ≈ label_percentage / 100`.
+For 91%: `300/330 = 0.909` ✓. For 52%: `172/330 = 0.521` ✓.
+
+## NEW PITFALL: Carousel Decks Need Visible Navigation Instructions
+
+Slides built with the carousel pattern (`.slide { opacity:0 }` + `.slide.active { opacity:1 }`) show
+only ONE slide at a time. Users opening the file directly see only slide 1 and may assume the deck is
+broken. Add a visible navigation hint:
+
+```html
+<div style="position:fixed;top:12px;right:20px;z-index:20;font-size:0.75rem;color:var(--text-dim);opacity:0.7">
+  Press → or click Prev/Next to navigate
+</div>
+```
+
+Place this before `</body>`. It auto-hides once the user starts navigating.
+Also verify keyboard handlers are present (ArrowRight/Left, Space, Home, End).
+
+## Pitfall: SVG Bar Chart Heights Must Be Calculated — Never Eyeball
+
+Inline SVG bar charts do NOT auto-scale to percentages. If you guess `y` and `height` pixel values,
+the bars will misrepresent the data even though the percentage labels look correct. This was the
+single most misleading bug in the MDR-TB deck — all 5 bar heights were wrong (52% shown as 100%
+of the axis, 91% shown as 82%, etc.).
+
+**Correct approach — always calculate from the axis range:**
+
+```
+Y-axis: top_edge_y = 100 (100%), bottom_edge_y = 430 (0%), range = 330px
+For a value of V%:  bar_height = (V/100) × 330,  bar_y = 430 − bar_height
+```
+
+Verification: for each bar, check that `bar_height / 330 ≈ label_percentage / 100`.
+For 91%: `300/330 = 0.909` ✓. For 52%: `172/330 = 0.521` ✓.
+Run this check in Python after writing the SVG before declaring the deck ready.
+
+## Pitfall: Carousel Decks Need Visible Navigation Instructions
+
+Decks built with the single-slide carousel pattern (`.slide { opacity:0 }` + `.slide.active { opacity:1 }`)
+show only slide 1 on open. Users unfamiliar with the pattern may report "I can only see the first slide."
+Add a visible hint before `</body>`:
+
+```html
+<div style="position:fixed;top:12px;right:24px;z-index:20;font-size:0.75rem;color:var(--text-dim);opacity:0.6">
+  Press → arrow key or click Prev / Next to navigate
+</div>
+```
+
+Also verify keyboard handlers fire: ArrowRight, ArrowLeft, Space for next, Home/End for first/last.
+
+## Pitfall: `execute_code` write_file Corrupts HTML — Use `patch` or `terminal`
+This session confirmed: the `write_file` tool inside `execute_code` strips 2 characters from the start
+of every line. `<!DOCTYPE html>` → `DOCTYPE html>`, `<style>` → `tyle>`, `.card` → `card`, etc.
+The corruption is silent — no error, but CSS classes lose `.` prefixes and tags lose `<` prefixes,
+breaking all styling. Additionally, `read_file` line-number separators (`|`) can become embedded
+as literal characters in the written output.
+
+**DO NOT use `write_file` inside `execute_code` for HTML files.** Use these alternatives instead:
+
+The `write_file` tool inside `execute_code` strips 2 characters from the start of every line in the file.
+This corrupts HTML irrecoverably: `<!DOCTYPE html>` → `DOCTYPE html>`, `<style>` → `tyle>`, `.card` → `card`.
+The corruption is silent — the file writes without error, but CSS classes lose their `.` prefix and HTML
+tags lose their `<` prefix, breaking all styling and structure.
+
+**DO NOT use `write_file` inside `execute_code` for HTML files.** Instead:
+
+1. **For inserting new slides or making targeted edits:** Use the `patch` tool from the main tool context.
+   `patch` does not corrupt files. Pattern: read the exact old_string from the file with `read_file`, 
+   construct the new_string, call `patch(path, old_string, new_string)`.
+
+2. **For bulk rewrites (full deck rebuild with marker-based insertion):** Write the HTML via the main
+   `write_file` tool directly — it does not corrupt. Build the complete content string in your response,
+   then call `write_file` with the full content.
+
+3. **For programmatic insertion (Phase 2f):** Skip `execute_code` entirely. Use `terminal` with a Python
+   heredoc to run the rebuild logic, then verify with `slide-doctor.py`. The `terminal` tool preserves file
+   integrity.
+
+**Recovery after corruption:** If you discover a file was corrupted, use `patch` to fix line-by-line.
+Match the corrupted version of each line as `old_string` and the correct version as `new_string`.
+This is tedious but effective — the MDR-TB deck CSS was recovered by replacing the entire CSS block
+in one `patch` after the 2-char corruption was discovered. Always verify with `slide-doctor.py` after recovery.
 
 **gemini-gemini.sh:** `-f file.md` reads the file content as the PROMPT text.
 **gemini.py:** `-f file.html` ATTACHES the file as a document; prompt text must be passed separately via `-p "text"` or positional argument.
@@ -908,25 +1091,45 @@ for tag in ['table', 'ul', 'ol']:
 - [x] At least one guideline cited for recommendation context
 - [x] Reference slide lists all PMIDs with full citations
 - [x] GRADE rating shown for every cited paper
-- [x] GRADE Summary of Findings table included for key outcomes
 - [x] Forest plot (SVG) embedded on dedicated slide with interpretation
 - [x] Cost-effectiveness / NMA data included where available
 - [x] Slide deck is single-file HTML, opens directly in browser
 - [x] Keyboard navigation works (arrows, space, home/end)
 - [x] Dark theme with gold accent (no purple, no Inter font)
-- [x] .pptx export available via slide-export.py
-- [x] ALL slides render — no blank pages (verify by clicking through every slide)
+- [x] ALL slides render — no blank pages
 - [x] Inline SVGs have `width="100%" height="auto"` — no overflow blank slides
 - [x] Content slides use `justify-content: flex-start` (NOT center)
-- [x] Div balance verified: total opens == total closes (use `execute_code` to count)
-- [x] Tag-type balance verified: `<table>`=`</table>`, `<ul>`=`</ul>`, `<ol>`=`</ol>` — mismatched closing tags (e.g. `</ul>` for `<table>`) cause cascading invisibility
-- [x] Per-slide div balance verified: no individual slide has mismatched divs
-- [x] SVG arrowheads verified: `<marker>` defined in `<defs>` BEFORE first `url(#arrowhead)` reference; all flow arrows have `marker-end` attribute
-- [x] All `data-slide` attributes are sequential 1..N (nav dots depend on this)
-- [x] External images have `onerror` fallback text (not `display:none`)
-- [x] Slide insertion used `<!-- SLIDE` marker approach, not regex div matching
-- [x] Gemini QA review completed — content accuracy, regulatory status, and data rates verified
-- [x] All Gemini corrections applied and div balance re-verified
+- [x] Div balance verified: total opens == total closes
+- [x] Tag-type balance verified: `<table>=</table>`, `<ul>=</ul>`, `<ol>=</ol>`
+- [x] Per-slide div balance: no individual slide has mismatched divs
+- [x] SVG arrowheads: `<marker>` defined BEFORE first `url(#arrowhead)` reference
+- [x] All `data-slide` attributes sequential 1..N
+- [x] External images have `onerror` fallback text
+- [x] Gemini QA review completed — content accuracy verified
+- [x] **Font sizes suitable for projection:** body ≥ 1.15rem, h2 ≥ 2.0rem, tables ≥ 1.05rem
+- [x] **Navigation is static bar** below slides — never fixed overlay
+- [x] **SVG bar chart heights calculated** from axis range, not eyeballed
+- [x] Carousel navigation hint visible on slide 1
+
+## Font Size Guidelines for Symposium / Projection Decks
+
+Default web-scale font sizes (h2: 1.8rem, body: 1.05rem, tables: 0.92rem) are too small
+for auditorium projection. For international symposium / grand rounds decks, scale up:
+
+| Element | Default | Symposium |
+|---|---|---|
+| h1 (title) | 2.8rem | 3.2rem |
+| h2 (slide heading) | 1.8rem | 2.0rem |
+| h3 (subhead) | 1.3rem | 1.5rem |
+| body p, li | 1.05rem | 1.15rem |
+| tables | 0.92rem | 1.05rem |
+| stat-box numbers | 2.4rem | 2.8rem |
+| .small / .ref | 0.85rem | 0.95rem |
+| section-title | 2.4rem | 2.8rem |
+
+When enlarging fonts, also enlarge stat-box min-width (140px → 150px) and reduce
+line-height slightly (1.65 → 1.55) to keep content compact. Always re-run screenshot
+verification after font changes — enlarged fonts push more content below the fold.
 
 ## Environment
 
@@ -937,6 +1140,8 @@ Gemini auth optional (pipeline works without it).
 
 ## Reference Files
 
+- `references/template.html` — **HTML skeleton with correct DOM structure.** Copy this and fill in slides. The CSS depends on specific element IDs (#slides, #nav) and nesting — if the DOM structure differs, the static-nav anti-overlap pattern will break. Use this skeleton, don't invent your own.
+- `references/template.css` — **Complete CSS template. Copy this entire block into your `<style>` tag.** Includes static-nav pattern (never overlaps), all component styles, correct font sizes for projection. Using this template eliminates the #1 source of token waste in deck building (nav overlap trial-and-error, ~72K tokens per session).
 - `references/haemostatic-powder-ugib-example.md` — complete worked example with all 12 PMIDs, extracted outcome data, GRADE ratings, forest plot data, and token budget from the June 2026 haemostatic powder pipeline run. Use as a template for new clinical topics.
 - `references/gemini-review-example-anti-amyloid.md` — Gemini QA review output showing typical corrections: outdated regulatory data, wrong ARIA rates, missing references. Use as a template for what to expect from Gemini reviews.
 - `references/svg-pathway-template.svg` — dark-themed pathway/cascade diagram template with placeholder labels. Replace bracketed text for any pathway (amyloid cascade, coagulation cascade, signal transduction, etc.)
