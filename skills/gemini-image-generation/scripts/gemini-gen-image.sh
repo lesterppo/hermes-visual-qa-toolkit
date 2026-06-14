@@ -41,6 +41,15 @@ if [ -z "${GEMINI_SID:-}" ] || [ -z "${GEMINI_TS:-}" ]; then
     }
 fi
 
+# Step 0: Pre-flight auth health check
+echo "Checking Gemini auth..."
+"$PYTHON" "$GEMINI_PY" "ping" 2>/dev/null | grep -q "pong" || {
+    echo "ERROR: Gemini auth expired or invalid. Re-authenticate:"
+    echo "  1. Login to gemini.google.com in Firefox"
+    echo "  2. Run: python3 ~/.hermes/scripts/gemini-auth.py"
+    exit 1
+}
+
 # Step 1: Generate image via Gemini
 echo "Generating image via Gemini..."
 TMP_JSON="/tmp/gemini-gen-$$.json"

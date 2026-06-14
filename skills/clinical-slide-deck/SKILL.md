@@ -20,6 +20,11 @@ triggers:
     - medical visualization
     - clinical diagram
     - medical SVG
+    - gemini image
+    - generated diagram
+    - medical diagram
+    - Imagen
+    - slide deck image
   context:
     - User asks to build a clinical or medical slide deck
     - User wants an evidence-based presentation with citations
@@ -28,6 +33,7 @@ triggers:
     - User mentions forest plots or evidence grading
     - User asks for geriatrics/medical postgraduate meeting presentation
     - User wants diagrams or visualizations embedded in clinical slides
+    - User asks to generate or add images/diagrams to a slide deck
 ---
 
 # Clinical Slide Deck Builder
@@ -36,13 +42,16 @@ triggers:
 
 ```
 TRIGGER: user asks for medical slide deck
-1. web_search → trial data + PMIDs (light) OR med-search-cli → PubMed (full)
+1. If well-covered topic: web_search (5-6 queries) → Gemini pre-build synthesis (single pro prompt)
+   If niche topic: med-search-cli → PubMed (full pipeline, Phases 1-2d)
 2. Build HTML: frontend-design dark theme (#0f1623, #c9a84c, Crimson Text + DM Sans)
-3. slide-doctor.py deck.html → 6 checks with full diagnostics → fix issues → re-run
-4. screenshots.js --path deck.html --slides 1-5,35-40,66 → per-slide opacity/visibility
+3. slide-doctor.py deck.html → 7 checks → fix issues → re-run
+4. screenshots.js --path deck.html → key slides → verify opacity/dimensions
 5. gemini-gemini.sh -i slide_*.png → visual QA → fix → re-screenshot
-6. gemini-gemini.sh -f deck.html → content accuracy review
-   slide-doctor.py --agent and screenshots.js --agent for compact JSON when piping
+6. gemini-gemini.sh -f deck.html → content accuracy review → apply fixes
+7. If deck has abstract/mechanistic concepts: gemini-ping.sh → image audit (full deck) →
+   batch generate with gemini-gen-image.sh (background parallel) → embed after h2 →
+   slide-doctor.py + re-screenshot → Gemini visual QA on image slides
 ```
 
 ## Dependencies (auto-load chain)
@@ -75,7 +84,7 @@ Proven workflow for building citation-backed clinical slide decks.
 **Light path workflow (skip Phases 1–2d):**
 **Light path workflow (skip Phases 1–2d):**
 1. Use `web_search` (5–6 targeted queries) to gather key trial data: N, primary endpoint, effect sizes, p-values, safety rates, PMIDs across all topic domains
-2. **Gemini pre-build synthesis:** Send a single structured prompt to Gemini (`-m pro --thinking extended -o /tmp/synthesis.md`) asking it to synthesize ALL search results into a structured evidence document covering epidemiology, pathophysiology, diagnosis, oral therapy, IV therapy, landmark trials, and all relevant special populations. Include specific trial names, numbers, and PMIDs. This consolidates scattered search results into one reference document before deck construction begins. See `references/gemini-pre-build-prompt.md` for the prompt template.
+2. **Gemini pre-build synthesis:** Send a single structured prompt to Gemini (`-m pro --thinking extended -o /tmp/synthesis.md`) asking it to synthesize ALL search results into a structured evidence document covering epidemiology, pathophysiology, diagnosis, oral therapy, IV therapy, landmark trials, and all relevant special populations. Include specific trial names, numbers, and PMIDs. This consolidates scattered search results into one reference document before deck construction begins. See `references/gemini-pre-build-prompt.md` for the prompt template. **Note:** Use `gemini.py` directly with `-p "$(cat prompt.md)"` to avoid wrapper auth issues when GEMINI_TS is null (some accounts lack a TS cookie).
 3. If needed, use `web_extract` on a comprehensive review article for supplementary data
 4. Read the Gemini synthesis and use it as the primary reference while building the HTML deck
 5. Pull PMIDs from the synthesis document and cite them on the reference slide
@@ -466,6 +475,8 @@ slide-doctor.py performs 6 checks:
 5. Orphaned content between slides
 6. SVG marker defs placement
 
+**Known false positive:** The per-slide check on the last slide typically reports 4 opens, 5 closes (or opens+1 = closes). This is a boundary artifact — the closing `</div>` for `<div id="slides">` falls within the last slide's section range because there's no next `<!-- SLIDE` marker. If the overall div balance is 0 delta and all other checks pass, this per-slide imbalance is harmless. Do NOT add extra `<div>` tags to the last slide to "fix" it — that would break the overall balance.
+
 Run after every structural edit. The check takes <0.5s on a 66-slide deck.
 
 ## Phase 2g: Screenshot Verification (Browser Rendering QA)
@@ -668,6 +679,8 @@ rsvg-convert forest_rebleeding.svg -o forest_rebleeding.png
 10. **Rebuild from <!-- SLIDE markers, never regex divs.** The `.*?</div>` non-greedy pattern is the single most destructive bug in this workflow. It matched internal `</div>` tags inside 7 slides and left orphaned HTML that broke every subsequent slide. Always split at `<!-- SLIDE` comment markers instead.
 11. **Regex `class="slide([^"]*)"` matches `slide-inner` — false positive.** When counting slide divs with regex, `class="slide([^"]*)"` will match both `<div class="slide">` AND `<div class="slide-inner">`, doubling your count. Use `class="slide(?:\s[^"]*|)"` to require space-or-quote after "slide", excluding -inner variants. This avoids false alarms about "duplicate slide divs."
 12. **execute_code read_file unreliable for large files.** The `read_file` tool inside `execute_code` may not return a `content` key for files > ~50KB. For div-balance analysis and rebuild scripts on large decks, use `terminal` with `python3 << 'PYEOF'` or the raw `read_file` tool with offset/limit pagination instead.
+13. **Gemini image audit prevents wasted generations.** Running a full-deck audit before generating any images ensures you only generate images for slides that actually need them. The iron deficiency deck audit identified 31 candidates; only 7 HIGH-priority GENERATED types were implemented. Without the audit, images would have been generated ad-hoc for the wrong slides. Audit costs one Gemini pro prompt; wasted generations cost tokens + rate limits + embedding time.
+14. **Gemini synthesis: use -p not -f for prompt text.** The -f flag on gemini.py attaches a file as a document, not as prompt text — using it alone produces "Prompt cannot be empty." Pass prompt content from a file with shell substitution: gemini.py -p "$(cat /tmp/prompt.md)" -m pro --thinking extended -o /tmp/synthesis.md. This works even with accounts that have null GEMINI_TS (which crash the gemini-gemini.sh wrapper).
 
 ## Pitfall: SVG Arrowhead Markers Must Precede References
 
@@ -729,6 +742,23 @@ If you already destroyed the slide structure by replacing the container div, the
 
 This recovery took 4 iterations in the iron deficiency deck rebuild. **Prevention is far cheaper than recovery.**
 
+## Pitfall: slide-doctor Per-Slide False Positive on Final Slide
+
+When the last slide in a deck has no subsequent `<!-- SLIDE` marker, slide-doctor's per-slide check range extends to EOF and counts the `</div>` that closes `<div id="slides">` as an extra close within the final slide. This produces a false positive (e.g., "slide 40: 4 opens, 5 closes") even when the overall div balance is perfect. Trust the overall balance (delta=0) — the per-slide imbalance on the final slide is a boundary artifact, not a real structural issue.
+
+## Pitfall: Gemini Image Gen Wrapper Unreliable — Prefer Direct gemini.py
+
+The `gemini-gen-image.sh` wrapper fails ~60% of the time with REQUEST_FAILED or "No image in Gemini response". The direct 3-step workflow works reliably:
+
+```bash
+# 1. Generate with --json
+GEMINI_SID=... GEMINI_TS=... gemini.py --json "Generate an image: ..." -o /tmp/img.json
+# 2. Parse URL
+URL=$(python3 -c "import json; d=json.load(open('/tmp/img.json')); print(d['images'][0]['url'])")
+# 3. Download with cookies
+curl -sL -b "__Secure-1PSID=${SID}; __Secure-1PSIDTS=${TS}" -o output.png "$URL"
+```
+
 ## Pitfall: Dense Workflow/Algorithm Slides Overflow 720px Viewport
 
 When building step-by-step algorithm slides with vertical arrow flow (Step 1 → Step 2 → Step 3 → branching treatment cards → decision node → Step 4), the stacked cards + arrows easily exceed 720px height. Screenshots will be truncated — Gemini visual QA will report content as "missing" when it's simply below the fold.
@@ -744,6 +774,83 @@ When building step-by-step algorithm slides with vertical arrow flow (Step 1 →
 
 **Verify:** After compacting, re-screenshot the slide and confirm the bottom-most element is visible to Gemini before continuing. The iron deficiency deck required 3 iterations to fit a 7-element vertical flow into 720px.
 
+## Pitfall: Fixed Navigation Bar Overlaps Bottom Content
+
+The `#nav` bar (Prev / counter / Next) is `position: fixed; bottom: 20px` — it sits on top of slide content at the bottom of the viewport. On dense slides (embedded images, tables, take-home message cards), the nav bar obscures the last visible content.
+
+**Symptoms:** Gemini visual QA reports "navigation overlay is sitting directly on top of the diagram" or "the last line of text is cut off by the navigation bar." Affected slides in PIVKA-II deck: slide 6 (prothrombin diagram obscured) and slide 37 (last take-home message clipped).
+
+**Fix:** Increase `.slide` bottom padding to create clearance for the nav:
+```css
+.slide {
+  padding: 48px 64px 72px 64px;  /* was 48px 64px — extra 24px bottom padding */
+}
+```
+This pushes the last content line above the fixed nav bar. The 72px bottom padding provides ~24px of clearance between content and the 48px nav bar region. Verify with re-screenshot after applying.
+
+## Pitfall: slide-doctor Per-Slide False Positive on Final Slide
+
+When the last slide in a deck has no subsequent `<!-- SLIDE` marker, slide-doctor's per-slide check range extends to EOF and counts the `</div>` that closes `<div id=\"slides\">` as an extra close within the final slide. This produces a false positive (e.g., "slide 40: 4 opens, 5 closes") even when the overall div balance is perfect. Trust the overall balance (delta=0) — the per-slide imbalance on the final slide is a boundary artifact, not a real structural issue.
+
+## Pitfall: Gemini Image Gen Wrapper Unreliable — Use Direct gemini.py
+
+The `gemini-gen-image.sh` wrapper fails ~60% of the time with REQUEST_FAILED or "No image in Gemini response". The direct 3-step workflow works reliably:
+
+```bash
+# 1. Generate with --json
+GEMINI_SID=... GEMINI_TS=... gemini.py --json \"Generate an image: ...\" -o /tmp/img.json
+# 2. Parse URL
+URL=$(python3 -c \"import json; d=json.load(open('/tmp/img.json')); print(d['images'][0]['url'])\")
+# 3. Download with cookies
+curl -sL -b \"__Secure-1PSID=${SID}; __Secure-1PSIDTS=${TS}\" -o output.png \"$URL\"
+## Pitfall: Dense Workflow/Algorithm Slides Overflow 720px Viewport
+
+When building step-by-step algorithm slides with vertical arrow flow (Step 1 → Step 2 → Step 3 → branching treatment cards → decision node → Step 4), the stacked cards + arrows easily exceed 720px height. Screenshots will be truncated — Gemini visual QA will report content as "missing" when it's simply below the fold.
+
+**Fix — compact aggressively for algorithm slides:**
+- Reduce card padding to `8px 16px` (from default 20px 24px)
+- Reduce vertical arrows to `font-size:0.9rem; line-height:1; padding:0` (from 1.5rem/4px)
+- Reduce card heading font to `1.0–1.05rem` and body to `0.85–0.95rem`
+- Use `margin-bottom:4px` on cards, `margin:0` on `<p>` inside cards
+- Set `gap:16px` on flex-rows instead of default 20px
+- Prefer single-line text (avoid `<br>` breaks in algorithm cards)
+- Add `style="font-size:0.9rem"` to the slide div itself as a global shrink
+
+**Verify:** After compacting, re-screenshot the slide and confirm the bottom-most element is visible to Gemini before continuing. The iron deficiency deck required 3 iterations to fit a 7-element vertical flow into 720px.
+
+## Pitfall: Fixed Navigation Bar Overlaps Bottom Content
+
+The `#nav` bar (Prev / counter / Next) is `position: fixed; bottom: 20px` — it sits on top of slide content at the bottom of the viewport. On dense slides (embedded images, tables, take-home message cards), the nav bar obscures the last visible content.
+
+**Symptoms:** Gemini visual QA reports "navigation overlay is sitting directly on top of the diagram" or "the last line of text is cut off by the navigation bar." Affected slides in PIVKA-II deck: slide 6 (prothrombin diagram obscured) and slide 37 (last take-home message clipped).
+
+**Fix:** Increase `.slide` bottom padding to create clearance for the nav:
+```css
+.slide {
+  padding: 48px 64px 72px 64px;  /* was 48px 64px — extra 24px bottom padding */
+}
+```
+This pushes the last content line above the fixed nav bar. The 72px bottom padding provides ~24px of clearance between content and the 48px nav bar region. Verify with re-screenshot after applying.
+
+## Pitfall: slide-doctor Per-Slide False Positive on Final Slide
+
+When the last slide in a deck has no subsequent `<!-- SLIDE` marker, slide-doctor's per-slide check range extends to EOF and counts the `</div>` that closes `<div id=\"slides\">` as an extra close within the final slide. This produces a false positive (e.g., "slide 40: 4 opens, 5 closes") even when the overall div balance is perfect. Trust the overall balance (delta=0) — the per-slide imbalance on the final slide is a boundary artifact, not a real structural issue.
+
+## Pitfall: Gemini Image Gen Wrapper Unreliable — Use Direct gemini.py
+
+The `gemini-gen-image.sh` wrapper fails ~60% of the time with REQUEST_FAILED or "No image in Gemini response". The direct 3-step workflow works reliably:
+
+```bash
+# 1. Generate with --json
+GEMINI_SID=... GEMINI_TS=... gemini.py --json \"Generate an image: ...\" -o /tmp/img.json
+# 2. Parse URL
+URL=$(python3 -c \"import json; d=json.load(open('/tmp/img.json')); print(d['images'][0]['url'])\")
+# 3. Download with cookies
+curl -sL -b \"__Secure-1PSID=${SID}; __Secure-1PSIDTS=${TS}\" -o output.png \"$URL\"
+```
+
+Free-tier accounts have rate limits (~1-2 images per session before Gemini returns text-only). Always run `gemini-ping.sh --quiet` before any generation attempt — expired cookies waste prompts with no diagnostic message.
+
 ## Phase 2i: Combined Improvement Review (Gemini + Self-Analysis)
 
 After the initial QA review, run a **two-source improvement pass** for maximum coverage:
@@ -758,7 +865,21 @@ After the initial QA review, run a **two-source improvement pass** for maximum c
 
 This two-source pattern caught 15 actionable improvements in the iron deficiency deck that a single-source review would have missed.
 
-## Pitfall: Wrong Closing Tag (e.g. </ul> instead of </table>) 
+## Pitfall: `-f` flag means different things in different CLIs
+
+**gemini-gemini.sh:** `-f file.md` reads the file content as the PROMPT text.
+**gemini.py:** `-f file.html` ATTACHES the file as a document; prompt text must be passed separately via `-p "text"` or positional argument.
+
+When using `gemini.py` directly (recommended for alternate accounts with TS=None), always pair `-f` with `-p`:
+
+```bash
+# CORRECT: attach deck as document, provide review instructions as prompt
+$PY $GEMINI -f deck.html -p "review this deck for accuracy..." -m pro -o review.md
+
+# WRONG: gemini.py -f deck.html alone → "Prompt cannot be empty"
+```
+
+When using the `gemini-gemini.sh` wrapper, `-f` alone is sufficient for reading files as prompts. This inconsistency is why the skill recommends `gemini.py` direct calls as the primary approach for Gemini synthesis and review tasks. 
 Example: in the anti-amyloid deck, a `<table>` was closed with `</ul>`. The browser:
 1. Ignores `</ul>` inside `<table>` (parse error)
 2. Leaves `<table>` open → swallows subsequent `</div>` closing tags

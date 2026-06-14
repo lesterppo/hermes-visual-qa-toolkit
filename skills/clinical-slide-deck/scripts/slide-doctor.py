@@ -57,10 +57,29 @@ def check_per_slide_divs(html):
         if i+1 < len(markers):
             end = markers[i+1].start()
         else:
-            # Last slide: stop at </div><!-- /slides --> if present
-            slides_close = html.find('</div><!-- /slides -->', start)
-            end = slides_close if slides_close != -1 else len(html)
+            end = len(html)
         block = html[start:end]
+        # For the last slide, trim content after its own closing </div>
+        # to avoid counting the #slides container close as part of this slide
+        if i+1 == len(markers):
+            slide_div_match = re.search(r'<div\s+class="(?:[^"]*\s)?slide(?:\s[^"]*)?', block)
+            if slide_div_match:
+                depth = 1
+                pos = slide_div_match.end()
+                while depth > 0 and pos < len(block):
+                    next_open = block.find('<div', pos)
+                    next_close = block.find('</div>', pos)
+                    if next_close == -1:
+                        break
+                    if next_open != -1 and next_open < next_close:
+                        depth += 1
+                        pos = next_open + 4
+                    else:
+                        depth -= 1
+                        pos = next_close + 6
+                        if depth == 0:
+                            block = block[:next_close] + '</div>'
+                            break
         opens = len(re.findall(r'<div\b', block))
         closes = len(re.findall(r'</div>', block))
         if opens != closes:
